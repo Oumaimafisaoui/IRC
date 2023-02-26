@@ -11,6 +11,7 @@ int main(int argc, char **argv)
 {
     char *end; // the next alpha elem
     int port_num;
+    
     if (argc != 3)
     {
         std::cout << "invalid number of arguments" << std::endl;
