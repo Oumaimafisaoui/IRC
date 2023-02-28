@@ -87,6 +87,7 @@ Server::Server(int port, std::string password)
        {
             perror("poll");
             break ;
+            
        }
        if(ret == 0) //TIME EXTENDED
        {
