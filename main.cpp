@@ -23,12 +23,10 @@ int main(int argc, char **argv)
         try
         {
             Server serv = Server(port_num, argv[2]);
-            std::cout << "All Cool\n";
         }
         catch(const std::exception& e)
         {
-            std::cout << "Problem in irc!" << '\n';
-            return (1);
+            std::cout << e.what() << '\n';
         }
     }
     else
