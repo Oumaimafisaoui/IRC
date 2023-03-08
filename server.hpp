@@ -64,7 +64,7 @@ class Server
         std::string get_pass() const;
         int get_port() const;
         int get_fd() const;
-        void receive_message(int fd);
+        void receive_message(int fd, std::vector<pollfd>::iterator iter);
     private:
         int fd;
         std::string password;

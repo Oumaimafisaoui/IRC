@@ -76,17 +76,26 @@ void Server::launch_socket()
     return ;
 }
 
-
-void Server::receive_message(int fd)
+#include <algorithm>
+void Server::receive_message(int fd, std::vector<pollfd>::iterator iter)
 {
     std::cout << "hey" << std::endl;
     int len;
     std::string message = "";
 
     // Client *client = new Client(fd);
-    fcntl(fd, F_SETFL, O_NONBLOCK);
+    // fcntl(fd, F_SETFL, O_NONBLOCK);
+    (void) iter;
     len = recv(fd, this->buffer, 500, 0);
-    while(len != 0)
+    buffer[len] = 0;
+    std::cout << buffer << std::endl;
+    if (len <= 0){
+        std::cout << "client went away!!" << std::endl;
+        close(fd);
+        poll_vec.erase(iter);
+        return ;
+    }
+    if (len != 0)
     {
         if (len < 0)
         {
@@ -95,14 +104,15 @@ void Server::receive_message(int fd)
               perror("  recv() failed");
               off = TRUE;
             }
-            break;
         }
         else if (len == 0)
         {
             //remove clients
         }
+        else{
         this->buffer[len] = 0;
         message.append(buffer);
+        }
     }
     std::cout << "received :" << buffer<< std::endl; 
     std::size_t j = message.find("\n\r");
@@ -136,9 +146,9 @@ Server::Server(int port, std::string password): fd(0), password(password), port(
         if(poll(poll_vec.data(), this->poll_vec.size(), -1) < 0)
             perror("poll: failed");
         std::vector<pollfd>::iterator i;
+            std::cout << "poll said hey\n";
         for (i = this->poll_vec.begin(); i < poll_vec.end(); i++)
         {
-            std::cout << "entered\n";
             if (! (i->revents & POLLIN))
                 continue;
                 if (i->fd == this->fd)
@@ -147,14 +157,17 @@ Server::Server(int port, std::string password): fd(0), password(password), port(
                    try
                    {
                         client_fd = accept(this->fd, (struct sockaddr*)&addr_client,&len);
+                        std::cout << client_fd << std::endl;
                         if (client_fd < 0)
                         {
                             throw std::runtime_error("Problem in accept client: " + std::string(strerror(errno)));
                         }
+                        std::cout << "hello there again" << std::endl;
                         fcntl(client_fd, F_SETFL, O_NONBLOCK);
                         client_poll.fd = client_fd;
                         client_poll.events = POLLIN;
                         client_poll.revents = 0;
+                        i->revents = 0;
                         poll_vec.push_back(client_poll);
                         std::cout << "pushed" << std::endl;
                    }
@@ -168,7 +181,7 @@ Server::Server(int port, std::string password): fd(0), password(password), port(
                 else 
                 {
                     std::cout << "hello" << std::endl;
-                    receive_message(i->fd);
+                    receive_message(i->fd, i);
                     
                 }
         }
