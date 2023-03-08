@@ -76,10 +76,9 @@ void Server::launch_socket()
     return ;
 }
 
-#include <algorithm>
+
 void Server::receive_message(int fd, std::vector<pollfd>::iterator iter)
 {
-    std::cout << "hey" << std::endl;
     int len;
     std::string message = "";
 
@@ -109,7 +108,8 @@ void Server::receive_message(int fd, std::vector<pollfd>::iterator iter)
         {
             //remove clients
         }
-        else{
+        else
+        {
         this->buffer[len] = 0;
         message.append(buffer);
         }
@@ -180,9 +180,7 @@ Server::Server(int port, std::string password): fd(0), password(password), port(
                 }
                 else 
                 {
-                    std::cout << "hello" << std::endl;
-                    receive_message(i->fd, i);
-                    
+                    receive_message(i->fd, i);    
                 }
         }
     }

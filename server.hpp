@@ -13,7 +13,7 @@
 #include <sys/time.h>
 #include <vector>
 #include <map>
-
+#include <algorithm>
 #include "client.hpp"
 
 # define FAMILY AF_INET
