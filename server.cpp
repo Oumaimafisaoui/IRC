@@ -88,30 +88,21 @@ void Server::receive_message(int fd, std::vector<pollfd>::iterator iter)
     len = recv(fd, this->buffer, 500, 0);
     buffer[len] = 0;
     std::cout << buffer << std::endl;
-    if (len <= 0){
-        std::cout << "client went away!!" << std::endl;
-        close(fd);
-        poll_vec.erase(iter);
-        return ;
+    if (len < 0){
     }
-    if (len != 0)
+    else
     {
-        if (len < 0)
+        if (len == 0)
         {
-            if (errno != EWOULDBLOCK)
-            {
-              perror("  recv() failed");
-              off = TRUE;
-            }
-        }
-        else if (len == 0)
-        {
-            //remove clients
+            std::cout << "client went away!!" << std::endl;
+            close(fd);
+            poll_vec.erase(iter);
+            return ;
         }
         else
         {
-        this->buffer[len] = 0;
-        message.append(buffer);
+            this->buffer[len] = 0;
+            message.append(buffer);
         }
     }
     std::cout << "received :" << buffer<< std::endl; 
@@ -143,10 +134,9 @@ Server::Server(int port, std::string password): fd(0), password(password), port(
 
     while(this->off == FALSE)
     {
-        if(poll(poll_vec.data(), this->poll_vec.size(), -1) < 0)
+        if(poll(poll_vec.data(), this->poll_vec.size(), 0) < 0)
             perror("poll: failed");
         std::vector<pollfd>::iterator i;
-            std::cout << "poll said hey\n";
         for (i = this->poll_vec.begin(); i < poll_vec.end(); i++)
         {
             if (! (i->revents & POLLIN))
