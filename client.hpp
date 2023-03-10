@@ -13,6 +13,9 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include "server.hpp"
+
+class Server;
 class Client
 {
     private:
@@ -21,6 +24,7 @@ class Client
         std::string userName;
         std::string hostName;
     public:
+        std::vector<std::string> commande_splited;
         Client(int fd);
         ~Client();
         std::string getNick() const;
@@ -28,6 +32,7 @@ class Client
         std::string getHost() const;
         int getFd() const;
         void setFd(int fd);
+        void setCommand(std::vector<std::string> command);
         void setNick(std::string nick);
         void setHost(std::string host);
         void setUser(std::string user);

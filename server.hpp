@@ -22,6 +22,8 @@
 #define TRUE             1
 #define FALSE            0
 #define MAX 200
+
+class Client;
 class Server
 {
     public:
@@ -70,7 +72,9 @@ class Server
         std::string get_pass() const;
         int get_port() const;
         int get_fd() const;
-        void receive_message(std::vector<pollfd>::iterator i);
+        void receive_message(std::vector<pollfd>::iterator i, Client *client, int len);
+        void client_not_connected(std::string message, Client *client);
+        void client_connected(std::string message , Client *client);
     private:
         int fd;
         std::string password;
@@ -80,6 +84,7 @@ class Server
        std::map<int, Client*> clients;
        char buffer[500];
        std::string message;
+       Client *client;
 };
 
 
