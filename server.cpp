@@ -120,7 +120,7 @@ void Server::receive_message(std::vector<pollfd>::iterator i)
         {
             std::cout << "client went away!!" << std::endl;
             close(i->fd);
-            poll_vec.erase(i);
+            this->poll_vec.erase(i);
             return ;
         }
         else
@@ -170,14 +170,15 @@ Server::Server(int port, std::string password): password(password), port(port) ,
         if(poll(poll_vec.data(), this->poll_vec.size(), 0) < 0)
             throw Server::ProblemInPoll();
 
-        std::vector<pollfd>::iterator i; //an iterator that points on the elements of the pollfd vector
+         //an iterator that points on the elements of the pollfd vector
         //iterate through the poll_vec
-        for (i = this->poll_vec.begin(); i != poll_vec.end(); i++)
+        for (unsigned long i = 0; i < sizeof(poll_vec); i++)
         {
             //skip the current itteration if there is no incoming data on the current socket
-            if (!(i->revents & POLLIN))
+            pollfd& current = poll_vec[i];
+            if (!(current.revents & POLLIN))
                 continue;
-                if (i->fd == this->fd) //checks if the current socket is the server socket to accept a new client
+                if (current.fd == this->fd) //checks if the current socket is the server socket to accept a new client
                 {
                    try
                    {
@@ -193,7 +194,7 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                         //the revents field to reflect the new events that have occurred since the last call to poll
                         //If we don't clear the revents field, the previous events
                         // will still be present and may cause incorrect behavior in our program.
-                        i->revents = 0;
+                    
                         // Client *client = new Client(fd);
 
                         //adds the client_poll structure to the poll_vec vector
@@ -216,7 +217,7 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                     //the server calls the receive_message() function 
                     //to handle the incoming data.
 
-                    receive_message(i);    
+                    receive_message(i + poll_vec.begin());    
                 }
         }
     }
