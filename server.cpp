@@ -108,7 +108,7 @@ void Server::launch_socket()
 void Server::receive_message(std::vector<pollfd>::iterator i)
 {
     int len;
-    std::string message = "";
+    this->message = "";
 
     len = recv(i->fd, this->buffer, 500, 0);
     buffer[len] = 0;
@@ -127,15 +127,62 @@ void Server::receive_message(std::vector<pollfd>::iterator i)
         {
             this->buffer[len] = 0;
             message.append(buffer);
+            std::size_t j = message.find("\n\r");
+            while(j != message.npos)
+            {
+                //remove "\r"
+                message.erase(j, 1);
+                message.insert(j,"");
+            }
         }
     }
-    // std::size_t j = message.find("\n\r");
-    // while(j != message.npos)
-    // {
-    //     message.erase(j, 1);
-    //     message.insert(j, " ");
-    // }
-    std::cout << message << std::endl;
+   std::vector<std::string> message_split;
+   std::string command;
+   size_t pos = 0;
+   size_t end = 0;
+
+   std::vector<std::string> command_split;
+   std::string key;
+   size_t end_it = 0;
+   size_t pos_it = 0;
+
+   while((end = message.find("\n", pos)) != std::string::npos)
+   {
+        command  = message.substr(pos, end - pos);
+        message_split.push_back(command);
+        pos = end + 1;
+   }
+
+   if (pos < message.length())
+   {
+        command = message.substr(pos, message.length());
+        message_split.push_back(command);
+   }
+
+   std::size_t k = 0;
+   while (k < message_split.size())
+   {
+        while((end_it = message.find(" ", pos_it)) != std::string::npos)
+        {
+                key  = message.substr(pos_it, end_it - pos_it);
+                command_split.push_back(key);
+                pos_it = end_it + 1;
+        }
+
+        if (pos_it < message.length())
+        {
+                key = message.substr(pos_it, message.length());
+                command_split.push_back(key);
+        }
+        k++; 
+   }
+
+    std::size_t x = 0;
+    while (x < command_split.size())
+    {
+        std::cout << x << " : " <<  command_split[x] << std::endl;
+        x++;
+    }
 }
 
 Server::Server(int port, std::string password): password(password), port(port) , off(FALSE)

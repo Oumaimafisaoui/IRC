@@ -79,6 +79,7 @@ class Server
        bool off;
        std::map<int, Client*> clients;
        char buffer[500];
+       std::string message;
 };
 
 
