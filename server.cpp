@@ -112,8 +112,8 @@ void Server::receive_message(std::vector<pollfd>::iterator i)
 
     len = recv(i->fd, this->buffer, 500, 0);
     buffer[len] = 0;
-    if (len < 0){
-    }
+    if (len < 0)
+        return ;
     else
     {
         if (len == 0)
@@ -195,6 +195,8 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                         // will still be present and may cause incorrect behavior in our program.
                         i->revents = 0;
                         // Client *client = new Client(fd);
+
+                        //adds the client_poll structure to the poll_vec vector
                         poll_vec.push_back(client_poll);
                         std::cout << "pushed to the vector" << std::endl;
                    }
@@ -207,6 +209,13 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                 }
                 else 
                 {
+                    //If the event was on the server socket, 
+                    //a new client connection is accepted using the accept() function,
+                    //and the client socket is added to the poll_vec vector. 
+                    //If the event was on a client socket, 
+                    //the server calls the receive_message() function 
+                    //to handle the incoming data.
+
                     receive_message(i);    
                 }
         }
