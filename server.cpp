@@ -172,54 +172,54 @@ Server::Server(int port, std::string password): password(password), port(port) ,
 
          //an iterator that points on the elements of the pollfd vector
         //iterate through the poll_vec
-        for (unsigned long i = 0; i < sizeof(poll_vec); i++)
+        for (unsigned long i = 0; i < poll_vec.size(); i++)
         {
             //skip the current itteration if there is no incoming data on the current socket
             pollfd& current = poll_vec[i];
             if (!(current.revents & POLLIN))
                 continue;
-                if (current.fd == this->fd) //checks if the current socket is the server socket to accept a new client
-                {
-                   try
-                   {
-                         //accept the incoming client connection
-                        client_fd = accept(this->fd, (struct sockaddr*)&addr_client,&len);
-                        if (client_fd < 0)
-                            throw std::runtime_error("Problem in accept client: ");
-                        fcntl(client_fd, F_SETFL, O_NONBLOCK); //sets the client socket to non-blocking
-                        //fill the client's pollfd struct with infos on the client
-                        client_poll.fd = client_fd;
-                        client_poll.events = POLLIN; //monitor incoming data on client
-                        //In the next iteration, the poll function will update
-                        //the revents field to reflect the new events that have occurred since the last call to poll
-                        //If we don't clear the revents field, the previous events
-                        // will still be present and may cause incorrect behavior in our program.
-                    
-                        // Client *client = new Client(fd);
+            if (current.fd == this->fd) //checks if the current socket is the server socket to accept a new client
+            {
+               try
+               {
+                     //accept the incoming client connection
+                    client_fd = accept(this->fd, (struct sockaddr*)&addr_client,&len);
+                    if (client_fd < 0)
+                        throw std::runtime_error("Problem in accept client: ");
+                    fcntl(client_fd, F_SETFL, O_NONBLOCK); //sets the client socket to non-blocking
+                    //fill the client's pollfd struct with infos on the client
+                    client_poll.fd = client_fd;
+                    client_poll.events = POLLIN; //monitor incoming data on client
+                    //In the next iteration, the poll function will update
+                    //the revents field to reflect the new events that have occurred since the last call to poll
+                    //If we don't clear the revents field, the previous events
+                    // will still be present and may cause incorrect behavior in our program.
+                
+                    // Client *client = new Client(fd);
 
-                        //adds the client_poll structure to the poll_vec vector
-                        poll_vec.push_back(client_poll);
-                        std::cout << "pushed to the vector" << std::endl;
-                   }
-                   catch(const std::exception& e)
-                   {
-                        std::cerr << e.what() << '\n';
-                        close(client_fd);
-                   }
-                   continue;
-                }
-                else 
-                {
-                    //If the event was on the server socket, 
-                    //a new client connection is accepted using the accept() function,
-                    //and the client socket is added to the poll_vec vector. 
-                    //If the event was on a client socket, 
-                    //the server calls the receive_message() function 
-                    //to handle the incoming data.
+                    //adds the client_poll structure to the poll_vec vector
+                    poll_vec.push_back(client_poll);
+                    std::cout << "pushed to the vector" << std::endl;
+               }
+               catch(const std::exception& e)
+               {
+                    std::cerr << e.what() << '\n';
+                    close(client_fd);
+               }
+               continue;
+            }
+            else 
+            {
+                //If the event was on the server socket, 
+                //a new client connection is accepted using the accept() function,
+                //and the client socket is added to the poll_vec vector. 
+                //If the event was on a client socket, 
+                //the server calls the receive_message() function 
+                //to handle the incoming data.
 
-                    receive_message(i + poll_vec.begin());    
-                }
-        }
+                receive_message(i + poll_vec.begin());    
+            }
+    }
     }
 }
 
