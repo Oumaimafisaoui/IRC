@@ -77,15 +77,14 @@ void Server::launch_socket()
 }
 
 
-void Server::receive_message(int fd, std::vector<pollfd>::iterator iter)
+void Server::receive_message(std::vector<pollfd>::iterator i)
 {
     int len;
     std::string message = "";
 
-    // Client *client = new Client(fd);
+   
     // fcntl(fd, F_SETFL, O_NONBLOCK);
-    (void) iter;
-    len = recv(fd, this->buffer, 500, 0);
+    len = recv(i->fd, this->buffer, 500, 0);
     buffer[len] = 0;
     std::cout << buffer << std::endl;
     if (len < 0){
@@ -95,8 +94,8 @@ void Server::receive_message(int fd, std::vector<pollfd>::iterator iter)
         if (len == 0)
         {
             std::cout << "client went away!!" << std::endl;
-            close(fd);
-            poll_vec.erase(iter);
+            close(i->fd);
+            poll_vec.erase(i);
             return ;
         }
         else
@@ -158,6 +157,7 @@ Server::Server(int port, std::string password): fd(0), password(password), port(
                         client_poll.events = POLLIN;
                         client_poll.revents = 0;
                         i->revents = 0;
+                        Client *client = new Client(fd);
                         poll_vec.push_back(client_poll);
                         std::cout << "pushed" << std::endl;
                    }
@@ -170,7 +170,7 @@ Server::Server(int port, std::string password): fd(0), password(password), port(
                 }
                 else 
                 {
-                    receive_message(i->fd, i);    
+                    receive_message(i);    
                 }
         }
     }
