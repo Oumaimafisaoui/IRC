@@ -129,12 +129,12 @@ void Server::receive_message(std::vector<pollfd>::iterator i)
             message.append(buffer);
         }
     }
-    std::size_t j = message.find("\n\r");
-    while(j != message.npos)
-    {
-        message.erase(j, 1);
-        message.insert(j, " ");
-    }
+    // std::size_t j = message.find("\n\r");
+    // while(j != message.npos)
+    // {
+    //     message.erase(j, 1);
+    //     message.insert(j, " ");
+    // }
     std::cout << message << std::endl;
 }
 
