@@ -110,6 +110,16 @@ void Server::receive_message(std::vector<pollfd>::iterator i)
     int len;
     this->message = "";
 
+   std::vector<std::string> message_split;
+   std::string command;
+   size_t pos = 0;
+   size_t end = 0;
+
+   std::vector<std::string> command_split;
+   std::string key;
+   size_t end_it = 0;
+   size_t pos_it = 0;
+
     len = recv(i->fd, this->buffer, 500, 0);
     buffer[len] = 0;
     if (len < 0)
@@ -136,42 +146,35 @@ void Server::receive_message(std::vector<pollfd>::iterator i)
             }
         }
     }
-   std::vector<std::string> message_split;
-   std::string command;
-   size_t pos = 0;
-   size_t end = 0;
-
-   std::vector<std::string> command_split;
-   std::string key;
-   size_t end_it = 0;
-   size_t pos_it = 0;
 
    while((end = message.find("\n", pos)) != std::string::npos)
    {
         command  = message.substr(pos, end - pos);
         message_split.push_back(command);
+        std::cout << command << std::endl;
         pos = end + 1;
    }
 
    if (pos < message.length())
    {
-        command = message.substr(pos, message.length());
+        command = message.substr(pos, message.length() - pos);
         message_split.push_back(command);
    }
 
    std::size_t k = 0;
    while (k < message_split.size())
    {
-        while((end_it = message.find(" ", pos_it)) != std::string::npos)
+        pos_it = 0;
+        while((end_it = message_split[k].find(" ", pos_it)) != std::string::npos)
         {
-                key  = message.substr(pos_it, end_it - pos_it);
+                key  = message_split[k].substr(pos_it, end_it - pos_it);
                 command_split.push_back(key);
                 pos_it = end_it + 1;
         }
 
-        if (pos_it < message.length())
+        if (pos_it < message_split[k].length())
         {
-                key = message.substr(pos_it, message.length());
+                key = message_split[k].substr(pos_it, message_split[k].length() - pos_it);
                 command_split.push_back(key);
         }
         k++; 
@@ -180,7 +183,7 @@ void Server::receive_message(std::vector<pollfd>::iterator i)
     std::size_t x = 0;
     while (x < command_split.size())
     {
-        std::cout << x << " : " <<  command_split[x] << std::endl;
+        std::cout << x << " : {" <<  command_split[x] << "} \n";
         x++;
     }
 }
