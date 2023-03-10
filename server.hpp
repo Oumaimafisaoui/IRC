@@ -60,6 +60,12 @@ class Server
             public:
                 virtual const char *what() const throw();
         };
+        class ProblemInPoll : public std::exception
+        {
+            public:
+                virtual const char *what() const throw();
+        };
+    
 
         std::string get_pass() const;
         int get_port() const;
