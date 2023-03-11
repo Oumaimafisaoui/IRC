@@ -40,3 +40,7 @@ void Client::setFd(int fd)
 {
     this->client_fd = fd;
 }
+void Client::setCommand(std::vector<std::string> command)
+{
+    this->commande_splited = command;
+}
