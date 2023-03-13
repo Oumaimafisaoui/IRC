@@ -109,7 +109,7 @@ void Server::launch_socket()
 
 void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, int len)
 {
-    this->message = "";
+  
     buffer[len] = 0;
 
     if (len < 0)
@@ -126,16 +126,16 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         else
         {
             this->buffer[len] = 0;
-            message.append(buffer);
-            std::size_t j = message.find("\r\n");
-            while(j != std::string::npos)
+            client->buff_client.append(buffer);
+            std::size_t j = client->buff_client.find("\n");
+            std::size_t k = client->buff_client.find("\r\n");
+            if (j != std::string::npos || k != std::string::npos)
             {
-                //replace all "\r\n with \n"
-               message.replace(j, 2, "\n");
-               j = message.find("\r\n", j+1);
+            std::memset(&this->buffer, 0, sizeof(buffer));
+            if (client->buff_client.back() == '\n' && client->buff_client.size() > 1)
+                client_not_connected(client->buff_client ,client);
+              
             }
-            if (message.back() == '\n' && message.size() > 1)
-                client_not_connected(message ,client);
         }
     }
 }
@@ -226,6 +226,10 @@ void Server::client_not_connected(std::string message , Client *client)
         std::cerr << "}\n";
         client->execute();
         command.clear();
+
+        //should i clear it ?
+
+        // this->client->buff_client.clear();
         k++; 
    }
 
@@ -295,7 +299,7 @@ Server::Server(int port, std::string password): password(password), port(port) ,
             else 
             {
                 int len = recv(current.fd, this->buffer, 500, 0);
-                receive_message(i + poll_vec.begin(), client, len);    
+                receive_message(i + poll_vec.begin(), clients[current.fd], len);    
             }
         }
     }

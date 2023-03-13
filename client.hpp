@@ -19,6 +19,7 @@ class Server;
 class Client
 {
     private:
+        std::string buff_client;
         int client_fd;
         std::string nickName;
         std::string userName;

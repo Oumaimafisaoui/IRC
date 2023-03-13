@@ -15,6 +15,7 @@ Client::Client(int fd, Server &server) : server(server)
     nickName = "";
     userName = "";
     hostName = std::string(hostn);
+    buff_client = "";
     memset(auth, false, sizeof(bool) * 3);
 }
 Client::~Client()
