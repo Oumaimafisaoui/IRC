@@ -127,14 +127,15 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         {
             this->buffer[len] = 0;
             message.append(buffer);
-            std::size_t j = message.find("\r");
-            while(j != message.npos)
+            std::size_t j = message.find("\r\n");
+            while(j != std::string::npos)
             {
-                //remove "\r"
-                message.erase(j, 1);
-                j = message.find("\r");
+                //replace all "\r\n with \n"
+               message.replace(j, 2, "\n");
+               j = message.find("\r\n", j+1);
             }
-            client_not_connected(message ,client);
+            if (message.back() == '\n' && message.size() > 1)
+                client_not_connected(message ,client);
         }
     }
 }
