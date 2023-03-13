@@ -117,9 +117,9 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
     {
         if (len == 0)
         {
-            std::cout << "client went away!!" << std::endl;
             close(i->fd);
             this->poll_vec.erase(i);
+            std::cout << "client went away!!" << std::endl;
             return ;
         }
         else
