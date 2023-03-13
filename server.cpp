@@ -1,4 +1,5 @@
 #include "server.hpp"
+#include "sys/socket.h"
 
 //The setsockopt() function allows the user to set various socket options, such as the socket's timeout value, the maximum size of the socket's send and receive buffer
 const char *Server::ProblemInFdServer::what() const throw()
@@ -126,18 +127,16 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         {
             this->buffer[len] = 0;
             message.append(buffer);
-            std::size_t j = message.find("\r\n");
+            std::size_t j = message.find("\r");
             while(j != message.npos)
             {
                 //remove "\r"
                 message.erase(j, 1);
-                message.insert(j,"");
+                j = message.find("\r");
             }
+            client_not_connected(message ,client);
         }
     }
-// check for client connection status
-client_not_connected(message ,client);
-// client_connected(message, client);
 }
 
 
@@ -193,7 +192,7 @@ void Server::client_not_connected(std::string message , Client *client)
    {
         command  = message.substr(pos, end - pos);
         message_split.push_back(command);
-        std::cout << command << std::endl;
+        // std::cout << command << std::endl;
         pos = end + 1;
    }
 
@@ -202,7 +201,7 @@ void Server::client_not_connected(std::string message , Client *client)
         command = message.substr(pos, message.length() - pos);
         message_split.push_back(command);
    }
-
+   std::cout << message_split.size() << std::endl;
    while (k < message_split.size())
    {
         pos_it = 0;
@@ -219,17 +218,23 @@ void Server::client_not_connected(std::string message , Client *client)
                 command_split.push_back(key);
         }
         //execute
+        client->setCommand(command_split);
+        std::cerr << "{";
+        for (unsigned int i = 0;i < command_split.size();++i)
+            std::cerr << command_split[i] << " ";
+        std::cerr << "}\n";
+        client->execute();
+        command.clear();
         k++; 
    }
 
     //display the output 
-    client->setCommand(command_split);
-    std::size_t x = 0;
-    while (x < client->commande_splited.size())
-    {
-        std::cout << x << " : {" <<  command_split[x] << "} \n";
-        x++;
-    }
+    // std::size_t x = 0;
+    // while (x < client->commande_splited.size())
+    // {
+    //     std::cout << x << " : {" <<  command_split[x] << "} \n";
+    //     x++;
+    // }
 }
 
 
@@ -256,46 +261,71 @@ Server::Server(int port, std::string password): password(password), port(port) ,
     {
         if(poll(poll_vec.data(), this->poll_vec.size(), 0) < 0)
             throw Server::ProblemInPoll();
-        for (unsigned long i = 0; i < sizeof(poll_vec); i++)
+         //an iterator that points on the elements of the pollfd vector
+        //iterate through the poll_vec
+        for (unsigned long i = 0; i < poll_vec.size(); i++)
         {
             pollfd& current = poll_vec[i];
             if (!(current.revents & POLLIN))
                 continue;
-                if (current.fd == this->fd) //checks if the current socket is the server socket to accept a new client
-                {
-                   try
-                   {
-                    
-                        client_fd = accept(this->fd, (struct sockaddr*)&addr_client,&len);
-                        if (client_fd < 0)
-                            throw std::runtime_error("Problem in accept client: ");
-                        fcntl(client_fd, F_SETFL, O_NONBLOCK); //sets the client socket to non-blocking
+            if (current.fd == this->fd) //checks if the current socket is the server socket to accept a new client
+            {
+               try
+               {
                 
-                        client_poll.fd = client_fd;
-                        client_poll.events = POLLIN; //monitor incoming data on client
-            
-                        client = new Client(poll_vec[i].fd);
-                        client->setFd(poll_vec[i].fd);
-                       
-                        poll_vec.push_back(client_poll);
-                        std::cout << "pushed to the vector" << std::endl;
-                   }
-                   catch(const std::exception& e)
-                   {
-                        std::cerr << e.what() << '\n';
-                        close(client_fd);
-                   }
-                   continue;
-                }
-                else 
-                {
-                    int len = recv(poll_vec[i].fd, this->buffer, 500, 0);
-                    receive_message(i + poll_vec.begin(), client, len);    
-                }
+                    client_fd = accept(this->fd, (struct sockaddr*)&addr_client,&len);
+                    if (client_fd < 0)
+                        throw std::runtime_error("Problem in accept client: ");
+                    fcntl(client_fd, F_SETFL, O_NONBLOCK); //sets the client socket to non-blocking
+                    client_poll.fd = client_fd;
+                    client_poll.events = POLLIN; //monitor incoming data on client
+                    client = new Client(client_fd, *this);
+                    this->clients.insert(std::make_pair(client_fd, client));
+                    poll_vec.push_back(client_poll);
+                    std::cout << "pushed to the vector" << std::endl;
+               }
+               catch(const std::exception& e)
+               {
+                    std::cerr << e.what() << '\n';
+                    close(client_fd);
+               }
+               continue;
+            }
+            else 
+            {
+                int len = recv(current.fd, this->buffer, 500, 0);
+                receive_message(i + poll_vec.begin(), client, len);    
+            }
         }
     }
 }
 
+void Server::sendMsg(int fd, std::string msg)
+{
+    if (send(fd, msg.c_str(), msg.length(), 0) == -1)
+    {
+        perror("send");
+        return;
+    }
+}
+
+bool Server::findNick(std::string &nick)
+{
+    for (std::map<int, Client*>::iterator it = this->clients.begin(); it != this->clients.end(); ++it)
+    {
+        if (it->second->getNick() == nick)
+            return true;
+    }
+    return false;
+}
+
+void Server::printAllClients()
+{
+    for (std::map<int, Client*>::iterator it = this->clients.begin(); it != this->clients.end();++it)
+    {
+        std::cout << it->second->getNick() << std::endl;
+    }
+}
 
 
 
