@@ -75,6 +75,9 @@ class Server
         void receive_message(std::vector<pollfd>::iterator i, Client *client, int len);
         void client_not_connected(std::string message, Client *client);
         void client_connected(std::string message , Client *client);
+        void sendMsg(int fd, std::string msg);
+        bool findNick(std::string &nick);
+        void printAllClients();
     private:
         int fd;
         std::string password;
