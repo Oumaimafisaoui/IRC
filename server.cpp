@@ -123,18 +123,22 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         else
         {
             std::cout << "new buffer" << std::endl;
-            this->buffer[len] = 0;
-            client->buff_client.append(buffer);
-            // std::cout << "This is the client->buff_client :" << client->buff_client;
+            std::string buff = this->buffer;
+            client->buff_client.append(buff);
+            std::cout << "This is the client->buff_client :" << client->buff_client;
             std::size_t pos = 0;
             while ((pos = client->buff_client.find("\r\n", pos)) != std::string::npos) 
             {
                 client->buff_client.replace(pos, 2, "\n");
+                std::cout << "replacing" << std::endl;
             }
             if (client->buff_client.find('\n') != std::string::npos && client->buff_client.size() > 1)
             {
+                std::cout << "new line found" << std::endl;
                 client_not_connected(client);
-            } 
+            } else {
+                std::cout << "Here we go.." << std::endl;
+            }
         }
     }
 }
@@ -222,15 +226,15 @@ void Server::client_not_connected(Client *client)
         for(unsigned int j = 0; j < message_split.size() ; j++)
         {
             std::cerr <<  " message : "<< j << " is " <<   message_split[j] << std::endl;
-            for (unsigned int i = 0; i < command_split.size();++i)
-            {
-                std::cerr << "The message " << j << " part number "<<  i << "  is: " << command_split[i] << std::endl;
-            }
+        }
+        for (unsigned int i = 0; i < command_split.size();++i)
+        {
+            std::cerr  << " part number "<<  i << "  is: " << command_split[i] << std::endl;
         }
         client->execute();
         command_split.clear();
         //should i clear it ?
-        // this->client->buff_client.clear();
+        this->client->buff_client.clear();
         ++k; 
    }
 
@@ -300,10 +304,14 @@ Server::Server(int port, std::string password): password(password), port(port) ,
             }
             else 
             {
-               
+                std::memset(&this->buffer, 0, sizeof(this->buffer));
                 int len = recv(current.fd, this->buffer, 500, 0);
                 std::cout << "This is the this->buffer value: " << this->buffer << std::endl; 
-                receive_message(i + poll_vec.begin(), clients[current.fd], len);    
+                receive_message(i + poll_vec.begin(), clients[current.fd], len);
+                size_t pos = this->client->buff_client.find("\n");
+                if ( pos != std::string::npos) {
+                     this->client->buff_client =  this->client->buff_client.substr(pos + 1,  this->client->buff_client.size());
+                }
             }
         }
     }
