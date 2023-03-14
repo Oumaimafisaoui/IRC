@@ -109,9 +109,6 @@ void Server::launch_socket()
 
 void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, int len)
 {
-  
-    buffer[len] = 0;
-
     if (len < 0)
         return ;
     else
@@ -125,17 +122,19 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         }
         else
         {
+            std::cout << "new buffer" << std::endl;
             this->buffer[len] = 0;
             client->buff_client.append(buffer);
-            std::size_t j = client->buff_client.find("\n");
-            std::size_t k = client->buff_client.find("\r\n");
-            if (j != std::string::npos || k != std::string::npos)
+            // std::cout << "This is the client->buff_client :" << client->buff_client;
+            std::size_t pos = 0;
+            while ((pos = client->buff_client.find("\r\n", pos)) != std::string::npos) 
             {
-            std::memset(&this->buffer, 0, sizeof(buffer));
-            if (client->buff_client.back() == '\n' && client->buff_client.size() > 1)
-                client_not_connected(client->buff_client ,client);
-              
+                client->buff_client.replace(pos, 2, "\n");
             }
+            if (client->buff_client.find('\n') != std::string::npos && client->buff_client.size() > 1)
+            {
+                client_not_connected(client->buff_client ,client);
+            } 
         }
     }
 }
@@ -167,12 +166,12 @@ void Server::client_connected(std::string message , Client *client)
 
     //display the output 
     client->setCommand(command_split);
-    std::size_t x = 0;
-    while (x < client->commande_splited.size())
-    {
-        std::cout << x << " : {" <<  command_split[x] << "} \n";
-        x++;
-    }
+    // std::size_t x = 0;
+    // while (x < client->commande_splited.size())
+    // {
+    //     std::cout << x << " : {" <<  command_split[x] << "} \n";
+    //     x++;
+    // }
 }
 
 void Server::client_not_connected(std::string message , Client *client)
@@ -193,7 +192,6 @@ void Server::client_not_connected(std::string message , Client *client)
    {
         command  = message.substr(pos, end - pos);
         message_split.push_back(command);
-        // std::cout << command << std::endl;
         pos = end + 1;
    }
 
@@ -202,7 +200,10 @@ void Server::client_not_connected(std::string message , Client *client)
         command = message.substr(pos, message.length() - pos);
         message_split.push_back(command);
    }
-   std::cout << message_split.size() << std::endl;
+ 
+    // for (unsigned int i = 0;i < message_split.size();++i)
+    //         std::cerr << message_split[i];
+    
    while (k < message_split.size())
    {
         pos_it = 0;
@@ -220,24 +221,27 @@ void Server::client_not_connected(std::string message , Client *client)
         }
         //execute
         client->setCommand(command_split);
-        std::cerr << "{";
-        for (unsigned int i = 0;i < command_split.size();++i)
-            std::cerr << command_split[i] << " ";
-        std::cerr << "}\n";
+        for(unsigned int j = 0; j < message_split.size() ; j++)
+        {
+                std::cerr << j <<  " message : " <<  message_split[j] << std::endl;
+        }
+
+        for (unsigned int i = 0; i < command_split.size();++i)
+        {
+            std::cerr << i << " : " << command_split[i] << std::endl;
+        }
         client->execute();
-        command.clear();
-
+        command_split.clear();
         //should i clear it ?
-
         // this->client->buff_client.clear();
-        k++; 
+        ++k; 
    }
 
     //display the output 
     // std::size_t x = 0;
     // while (x < client->commande_splited.size())
     // {
-    //     std::cout << x << " : {" <<  command_split[x] << "} \n";
+    //     std::cout << x << "the splited command : {" <<  command_split[x] << "} \n";
     //     x++;
     // }
 }
@@ -287,6 +291,7 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                     client = new Client(client_fd, *this);
                     this->clients.insert(std::make_pair(client_fd, client));
                     poll_vec.push_back(client_poll);
+                    // std::cout << "client fd: " << client_fd << " current.fd" <<current.fd << std::endl;
                     std::cout << "pushed to the vector" << std::endl;
                }
                catch(const std::exception& e)
@@ -298,7 +303,9 @@ Server::Server(int port, std::string password): password(password), port(port) ,
             }
             else 
             {
+               
                 int len = recv(current.fd, this->buffer, 500, 0);
+                // std::cout << "This is the this->buffer value: " << this->buffer << std::endl; 
                 receive_message(i + poll_vec.begin(), clients[current.fd], len);    
             }
         }
