@@ -229,7 +229,6 @@ void Server::client_not_connected(std::string message , Client *client)
                 std::cerr << "The message " << j << " part number "<<  i << "  is: " << command_split[i] << std::endl;
             }
         }
-
         client->execute();
         command_split.clear();
         //should i clear it ?
