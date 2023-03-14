@@ -133,7 +133,7 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
             }
             if (client->buff_client.find('\n') != std::string::npos && client->buff_client.size() > 1)
             {
-                client_not_connected(client->buff_client ,client);
+                client_not_connected(client);
             } 
         }
     }
@@ -172,7 +172,7 @@ void Server::client_connected(std::string message , Client *client)
     // }
 }
 
-void Server::client_not_connected(std::string message , Client *client)
+void Server::client_not_connected(Client *client)
 {
    std::vector<std::string> message_split;
    std::string command;
@@ -186,16 +186,16 @@ void Server::client_not_connected(std::string message , Client *client)
 
    std::size_t k = 0;
 
-   while((end = message.find("\n", pos)) != std::string::npos)
+   while((end = client->buff_client.find("\n", pos)) != std::string::npos)
    {
-        command  = message.substr(pos, end - pos);
+        command  = client->buff_client.substr(pos, end - pos);
         message_split.push_back(command);
         pos = end + 1;
    }
 
-   if (pos < message.length())
+   if (pos < client->buff_client.length())
    {
-        command = message.substr(pos, message.length() - pos);
+        command = client->buff_client.substr(pos, client->buff_client.length() - pos);
         message_split.push_back(command);
    }
  
