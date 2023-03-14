@@ -223,13 +223,13 @@ void Server::client_not_connected(std::string message , Client *client)
         client->setCommand(command_split);
         for(unsigned int j = 0; j < message_split.size() ; j++)
         {
-                std::cerr << j <<  " message : " <<  message_split[j] << std::endl;
+            std::cerr <<  " message : "<< j << " is " <<   message_split[j] << std::endl;
+            for (unsigned int i = 0; i < command_split.size();++i)
+            {
+                std::cerr << "The message " << j << " part number "<<  i << "  is: " << command_split[i] << std::endl;
+            }
         }
 
-        for (unsigned int i = 0; i < command_split.size();++i)
-        {
-            std::cerr << i << " : " << command_split[i] << std::endl;
-        }
         client->execute();
         command_split.clear();
         //should i clear it ?
@@ -305,7 +305,7 @@ Server::Server(int port, std::string password): password(password), port(port) ,
             {
                
                 int len = recv(current.fd, this->buffer, 500, 0);
-                // std::cout << "This is the this->buffer value: " << this->buffer << std::endl; 
+                std::cout << "This is the this->buffer value: " << this->buffer << std::endl; 
                 receive_message(i + poll_vec.begin(), clients[current.fd], len);    
             }
         }
