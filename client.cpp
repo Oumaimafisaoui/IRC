@@ -110,7 +110,7 @@ void Client::nickCmd()
     this->setNick(this->commande_splited[1]);
     auth[1] = true;
     if (auth[0] && auth[1] && auth[2])
-        this->server.sendMsg(this->getFd(), std::string(":IRC 001 ") + ":Welcome to the IRC Network, " + (this->getNick().empty() ? "*" : this->getNick()) +  "[!" + this->getUser() + "@" + this->getHost() + "\r\n");
+        this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
 }
 void Client::userCmd()
 {
@@ -134,7 +134,7 @@ void Client::userCmd()
     this->setUser(commande_splited[1]);
     auth[2] = true;
     if (auth[0] && auth[1] && auth[2])
-        this->server.sendMsg(this->getFd(), std::string(":IRC 001 ") + ":Welcome to the IRC Network, " + (this->getNick().empty() ? "*" : this->getNick()) +  "[!" + this->getUser() + "@" + this->getHost() + "\r\n");
+        this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
 }
 void Client::execute()
 {

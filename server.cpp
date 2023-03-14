@@ -122,23 +122,22 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         }
         else
         {
-            std::cout << "new buffer" << std::endl;
+            // std::cout << "new buffer" << std::endl;
             std::string buff = this->buffer;
             client->buff_client.append(buff);
-            std::cout << "This is the client->buff_client :" << client->buff_client;
+            // std::cout << "This is the client->buff_client :" << client->buff_client;
             std::size_t pos = 0;
             while ((pos = client->buff_client.find("\r\n", pos)) != std::string::npos) 
             {
                 client->buff_client.replace(pos, 2, "\n");
-                std::cout << "replacing" << std::endl;
+                // std::cout << "replacing" << std::endl;
             }
             if (client->buff_client.find('\n') != std::string::npos && client->buff_client.size() > 1)
             {
-                std::cout << "new line found" << std::endl;
+                // puts("found new line");
+                // std::cout << "new line found" << std::endl;
                 client_not_connected(client);
-            } else {
-                std::cout << "Here we go.." << std::endl;
-            }
+            } 
         }
     }
 }
@@ -178,6 +177,7 @@ void Server::client_connected(std::string message , Client *client)
 
 void Server::client_not_connected(Client *client)
 {
+    // puts("dante");
    std::vector<std::string> message_split;
    std::string command;
    size_t pos = 0;
@@ -222,15 +222,11 @@ void Server::client_not_connected(Client *client)
                 command_split.push_back(key);
         }
         //execute
+        std::cerr << "{";
+        for (unsigned int i = 0;i < command_split.size();++i)
+            std::cerr << command_split[i] << " ";
+        std::cerr << "}\n";
         client->setCommand(command_split);
-        for(unsigned int j = 0; j < message_split.size() ; j++)
-        {
-            std::cerr <<  " message : "<< j << " is " <<   message_split[j] << std::endl;
-        }
-        for (unsigned int i = 0; i < command_split.size();++i)
-        {
-            std::cerr  << " part number "<<  i << "  is: " << command_split[i] << std::endl;
-        }
         client->execute();
         command_split.clear();
         //should i clear it ?
@@ -306,7 +302,7 @@ Server::Server(int port, std::string password): password(password), port(port) ,
             {
                 std::memset(&this->buffer, 0, sizeof(this->buffer));
                 int len = recv(current.fd, this->buffer, 500, 0);
-                std::cout << "This is the this->buffer value: " << this->buffer << std::endl; 
+                // std::cout << "This is the this->buffer value: " << this->buffer << std::endl; 
                 receive_message(i + poll_vec.begin(), clients[current.fd], len);
                 size_t pos = this->client->buff_client.find("\n");
                 if ( pos != std::string::npos) {
