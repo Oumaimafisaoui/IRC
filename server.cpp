@@ -143,8 +143,6 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
 void Server::client_connected(std::string message , Client *client)
 {
 
-    (void)client;
-
    std::vector<std::string> command_split;
    std::string key;
    size_t end_it = 0;
