@@ -136,6 +136,7 @@ void Client::userCmd()
     if (auth[0] && auth[1] && auth[2])
         this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
 }
+
 void Client::execute()
 {
     if (this->commande_splited.size() < 1)
@@ -157,4 +158,4 @@ void Client::execute()
         this->nickCmd();
         return ;
     }
-}
+} 

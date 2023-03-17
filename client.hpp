@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include "channel.hpp"
 
 class Server;
 

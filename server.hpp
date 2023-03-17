@@ -15,6 +15,7 @@
 #include <map>
 #include <algorithm>
 #include "client.hpp"
+#include "channel.hpp"
 
 # define FAMILY AF_INET
 # define TYPE SOCK_STREAM
@@ -85,9 +86,14 @@ class Server
        std::vector<pollfd> poll_vec;
        bool off;
        std::map<int, Client*> clients;
+       std::map<std::string, Channel*> _channels;
        char buffer[500];
        std::string message;
+       std::vector<std::string> _command_splited;
        Client *client;
+       bool _isNotChannelCmd(std::vector<std::string> command_splited);
+       void _execute_commands(Client *clien);
+       void _joinCmd(Client *client);
 };
 
 

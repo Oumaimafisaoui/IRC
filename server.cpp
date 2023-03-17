@@ -134,7 +134,7 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
             }
             if (client->buff_client.find('\n') != std::string::npos && client->buff_client.size() > 1)
             {
-                // puts("found new line");
+                 // puts("found new line");
                 // std::cout << "new line found" << std::endl;
                 client_not_connected(client);
             } 
@@ -189,7 +189,7 @@ void Server::client_not_connected(Client *client)
    size_t pos_it = 0;
 
    std::size_t k = 0;
-
+ 
    while((end = client->buff_client.find("\n", pos)) != std::string::npos)
    {
         command  = client->buff_client.substr(pos, end - pos);
@@ -226,9 +226,13 @@ void Server::client_not_connected(Client *client)
         for (unsigned int i = 0;i < command_split.size();++i)
             std::cerr << command_split[i] << " ";
         std::cerr << "}\n";
-        client->setCommand(command_split);
-        client->execute();
+        this->_command_splited = command_split;
+        if (_isNotChannelCmd(command_split)) {
+            client->setCommand(command_split);
+            client->execute();
+        }
         command_split.clear();
+        _command_splited.clear();
         //should i clear it ?
         this->client->buff_client.clear();
         ++k; 
@@ -322,6 +326,17 @@ void Server::sendMsg(int fd, std::string msg)
     }
 }
 
+bool Server::_isNotChannelCmd(std::vector<std::string> command_splited)
+{
+    if (command_splited[0] == "USER" || command_splited[0] == "user")
+        return true;
+    if (command_splited[0] == "PASS" || command_splited[0] == "pass")
+        return true;
+    if (command_splited[0] == "NICK" || command_splited[0] == "nick")
+        return true;
+    return false;
+}
+
 bool Server::findNick(std::string &nick)
 {
     for (std::map<int, Client*>::iterator it = this->clients.begin(); it != this->clients.end(); ++it)
@@ -340,6 +355,16 @@ void Server::printAllClients()
     }
 }
 
+void Server::_joinCmd(Client *client)
+{
+    (void)client;
+}
+
+void Server::_execute_commands(Client *client) 
+{
+    if (_command_splited[0] == "JOIN" || _command_splited[0] == "join")
+        _joinCmd(client);
+}
 
 
 
