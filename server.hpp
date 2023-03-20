@@ -2,6 +2,7 @@
 #define SERVER_HPP
 
 #include <netinet/in.h>
+#include <utility>
 #include <string>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -75,7 +76,7 @@ class Server
         int get_fd() const;
         void receive_message(std::vector<pollfd>::iterator i, Client *client, int len);
         void client_not_connected(Client *client);
-        void client_connected(std::string message , Client *client);
+        void client_connected(Client *client);
         void sendMsg(int fd, std::string msg);
         bool findNick(std::string &nick);
         void printAllClients();

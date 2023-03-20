@@ -136,37 +136,48 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
             {
                  // puts("found new line");
                 // std::cout << "new line found" << std::endl;
-                client_not_connected(client);
+                if (!client->checkIsRegister())
+                    client_not_connected(client);
+                else
+                    client_connected(client);
             } 
         }
     }
 }
 
 
-void Server::client_connected(std::string message , Client *client)
+void Server::client_connected(Client *client)
 {
 
+    puts("enter");
    std::vector<std::string> command_split;
    std::string key;
    size_t end_it = 0;
    size_t pos_it = 0;
 
     pos_it = 0;
-    while((end_it = message.find(" ", pos_it)) != std::string::npos)
+    while((end_it = client->buff_client.find(" ", pos_it)) != std::string::npos)
     {
-            key  = message.substr(pos_it, end_it - pos_it);
+            key  = client->buff_client.substr(pos_it, end_it - pos_it);
             command_split.push_back(key);
             pos_it = end_it + 1;
     }
 
-    if (pos_it < message.length())
+    if (pos_it < client->buff_client.length())
     {
-            key = message.substr(pos_it, message.length() - pos_it);
+            key = client->buff_client.substr(pos_it, client->buff_client.length() - pos_it);
             command_split.push_back(key);
     }
-
-    //display the output 
+    //display the output
+    std::string m = command_split[command_split.size() - 1];
+    m[m.length() - 1] = '\0';
+    command_split[command_split.size() - 1] = m;
     client->setCommand(command_split);
+    _execute_commands(client);
+    client->commande_splited.clear();
+    client->buff_client.clear();
+    command_split.clear();
+
     // std::size_t x = 0;
     // while (x < client->commande_splited.size())
     // {
@@ -227,12 +238,12 @@ void Server::client_not_connected(Client *client)
             std::cerr << command_split[i] << " ";
         std::cerr << "}\n";
         this->_command_splited = command_split;
+        
         if (_isNotChannelCmd(command_split)) {
             client->setCommand(command_split);
             client->execute();
         }
         command_split.clear();
-        _command_splited.clear();
         //should i clear it ?
         this->client->buff_client.clear();
         ++k; 
@@ -355,16 +366,51 @@ void Server::printAllClients()
     }
 }
 
-void Server::_joinCmd(Client *client)
-{
-    (void)client;
-}
 
 void Server::_execute_commands(Client *client) 
 {
-    if (_command_splited[0] == "JOIN" || _command_splited[0] == "join")
+    if (client->commande_splited[0] == "JOIN" || client->commande_splited[0] == "join")
+    {
+    std::cout << "sorti *** " << std::endl;
         _joinCmd(client);
+    }
+    std::cout << "sorti" << std::endl;
 }
 
+void Server::_joinCmd(Client *client)
+{
+    int index;
+    int size = client->commande_splited.size();
+    std::vector<std::string> passwords;
+    std::vector<std::string> channels;
+    index = 1;
+    while (client->commande_splited[index][0] == '#')
+        channels.push_back(client->commande_splited[index++]);
+    if (index == 1)
+        sendMsg(client->getFd(), "Channel name has to start by #\n");
+    else
+    {
+        while(index < size)
+            passwords.push_back(client->commande_splited[index++]);
+        passwords.resize(channels.size(), "");
+        for (size_t i = 0; i < passwords.size(); i++)
+        {
+            std::cout << passwords[i] << " pass" << std::endl;
+            std::cout << channels[i] << " channel" << std::endl;
+        }
+        size = channels.size();
+        for (int i = 0; i < size; i++)
+        {
+            Channel *channel = _channels.find(channels[i])->second;
+            if (!channel || channel == _channels.end()->second)
+            {
+                Channel *newChanel = new Channel(channels[i], client->getFd(), passwords[i]);
+                _channels.insert(make_pair(channels[i], newChanel));
+            }
+            else
+                channel->addMember(client->getFd(), passwords[i]);
+        }
+    }
+}
 
 

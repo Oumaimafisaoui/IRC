@@ -38,6 +38,7 @@ class Client
         std::string getUser() const;
         std::string getHost() const;
         int getFd() const;
+        bool checkIsRegister();
         void setFd(int fd);
         void setCommand(std::vector<std::string> command);
         void setNick(std::string nick);

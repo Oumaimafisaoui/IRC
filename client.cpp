@@ -81,6 +81,10 @@ void Client::passCmd()
     auth[0] = true;
 }
 
+bool Client::checkIsRegister() {
+    return isRegistered;
+}
+
 void Client::nickCmd()
 {
     if (auth[0] && auth[1] &&  auth[2] && !isRegistered)
@@ -110,7 +114,10 @@ void Client::nickCmd()
     this->setNick(this->commande_splited[1]);
     auth[1] = true;
     if (auth[0] && auth[1] && auth[2])
+    {
         this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
+        this->isRegistered = true;
+    }
 }
 void Client::userCmd()
 {
