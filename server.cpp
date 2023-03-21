@@ -417,11 +417,11 @@ void Server::_joinCmd(Client *client)
             Channel *channel = _findChannel(channels[i]);
             if (!channel)
             {
-                newChanel = new Channel(channels[i], client->getFd(), passwords[i]);
+                newChanel = new Channel(channels[i], client, passwords[i]);
                 _channels.push_back(newChanel);
             }
             else
-                channel->addMember(client->getFd(), passwords[i]);
+                channel->addMember(client, passwords[i]);
         }
     }
 }

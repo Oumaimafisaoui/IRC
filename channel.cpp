@@ -1,12 +1,12 @@
 #include "channel.hpp"
 
-Channel::Channel(std::string name, int ownerFd, std::string pass)
+Channel::Channel(std::string name, Client *_client, std::string pass)
 {
     this->_name = name;
-    this->_ownerFd = ownerFd;
-    _clientList.insert(ownerFd);
+    this->_owner = _client;
+    _clientList.insert(_client);
     this->_password = pass;
-    sendToOne(ownerFd, "create channel succesful\n");
+    sendToOne(_client->getFd(), "create channel succesful\n");
 }
 
 std::string Channel::getChannelName()
@@ -14,40 +14,40 @@ std::string Channel::getChannelName()
     return this->_name;
 }
 
-std::set<int> Channel::getClients()
+std::set<Client *> Channel::getClients()
 {
     return this->_clientList;
 }
 
-void Channel::addMember(int fd, std::string password)
+void Channel::addMember(Client *_client, std::string password)
 {
     if (password != this->_password && password != "")
-        sendToOne(fd, "Permission denied Please put a good password\n");
-    else if (isMember(fd))
-        sendToOne(fd, "You've already joined this channel\n");
+        sendToOne(_client->getFd(), "Permission denied Please put a good password\n");
+    else if (isMember(_client))
+        sendToOne(_client->getFd(), "You've already joined this channel\n");
     else
     {
-        _clientList.insert(fd);
+        _clientList.insert(_client);
         sendToMembers("New use just joined this channel\n");
     }
 }
 
-void Channel::removeMember(int fd)
+void Channel::removeMember(Client *_client)
 {
-    _clientList.erase(fd);
+    _clientList.erase(_client);
 }
 
-bool Channel::isMember(int fd)
+bool Channel::isMember(Client *_client)
 {
-    return _clientList.find(fd) != _clientList.end();
+    return _clientList.find(_client) != _clientList.end();
 }
 
 void Channel::sendToMembers(std::string message)
 {
-    std::set<int>::iterator iterator;
+    std::set<Client *>::iterator iterator;
     for (iterator = _clientList.begin(); iterator != _clientList.end(); iterator++)
     {
-        if (send((*iterator), message.c_str(), message.length(), 0) == -1)
+        if (send((*iterator)->getFd(), message.c_str(), message.length(), 0) == -1)
             perror ("send");
     }
 }
