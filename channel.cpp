@@ -21,7 +21,7 @@ std::set<int> Channel::getClients()
 
 void Channel::addMember(int fd, std::string password)
 {
-    if (password != this->_password)
+    if (password != this->_password && password != "")
         sendToOne(fd, "Permission denied Please put a good password\n");
     else if (isMember(fd))
         sendToOne(fd, "You've already joined this channel\n");

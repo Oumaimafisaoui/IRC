@@ -149,7 +149,6 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
 void Server::client_connected(Client *client)
 {
 
-    puts("enter");
    std::vector<std::string> command_split;
    std::string key;
    size_t end_it = 0;
@@ -170,7 +169,7 @@ void Server::client_connected(Client *client)
     }
     //display the output
     std::string m = command_split[command_split.size() - 1];
-    m[m.length() - 1] = '\0';
+    m = m.substr(0, m.size() - 1);
     command_split[command_split.size() - 1] = m;
     client->setCommand(command_split);
     _execute_commands(client);
@@ -366,6 +365,19 @@ void Server::printAllClients()
     }
 }
 
+Channel *Server::_findChannel(std::string name)
+{
+    size_t size;
+
+    size = _channels.size();
+    for (size_t i = 0; i < size; i++)
+    {
+        if (_channels[i]->getChannelName() == name)
+            return _channels[i];
+    }
+    return (NULL);
+}
+
 
 void Server::_execute_commands(Client *client) 
 {
@@ -383,6 +395,7 @@ void Server::_joinCmd(Client *client)
     int size = client->commande_splited.size();
     std::vector<std::string> passwords;
     std::vector<std::string> channels;
+    Channel *newChanel;
     index = 1;
     while (client->commande_splited[index][0] == '#')
         channels.push_back(client->commande_splited[index++]);
@@ -401,11 +414,11 @@ void Server::_joinCmd(Client *client)
         size = channels.size();
         for (int i = 0; i < size; i++)
         {
-            Channel *channel = _channels.find(channels[i])->second;
-            if (!channel || channel == _channels.end()->second)
+            Channel *channel = _findChannel(channels[i]);
+            if (!channel)
             {
-                Channel *newChanel = new Channel(channels[i], client->getFd(), passwords[i]);
-                _channels.insert(make_pair(channels[i], newChanel));
+                newChanel = new Channel(channels[i], client->getFd(), passwords[i]);
+                _channels.push_back(newChanel);
             }
             else
                 channel->addMember(client->getFd(), passwords[i]);

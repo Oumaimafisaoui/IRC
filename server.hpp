@@ -80,14 +80,15 @@ class Server
         void sendMsg(int fd, std::string msg);
         bool findNick(std::string &nick);
         void printAllClients();
+        Channel *_findChannel(std::string name);
     private:
-        int fd;
+       int fd;
         std::string password;
         int port;
        std::vector<pollfd> poll_vec;
        bool off;
        std::map<int, Client*> clients;
-       std::map<std::string, Channel*> _channels;
+       std::vector<Channel *> _channels;
        char buffer[500];
        std::string message;
        std::vector<std::string> _command_splited;
