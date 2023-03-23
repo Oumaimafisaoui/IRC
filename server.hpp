@@ -81,6 +81,7 @@ class Server
         bool findNick(std::string &nick);
         void printAllClients();
         Channel *_findChannel(std::string name);
+        Client *findClientByNick(std::string name);
     private:
        int fd;
         std::string password;
@@ -96,6 +97,7 @@ class Server
        bool _isNotChannelCmd(std::vector<std::string> command_splited);
        void _execute_commands(Client *clien);
        void _joinCmd(Client *client);
+       void _modeCmd(Client *client);
 };
 
 
