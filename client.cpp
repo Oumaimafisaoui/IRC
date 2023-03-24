@@ -112,12 +112,9 @@ void Client::nickCmd()
         return ;
     }
     this->setNick(this->commande_splited[1]);
+    this->nick_is_set = true;
     auth[1] = true;
-    if (auth[0] && auth[1] && auth[2])
-    {
-        this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
-        this->isRegistered = true;
-    }
+   //removed sending message from server
 }
 void Client::userCmd()
 {
@@ -133,6 +130,11 @@ void Client::userCmd()
         this->server.sendMsg(this->getFd(), ":IRC 434 " + (this->getNick().empty() ? "*" : this->getNick()) + " :Pass is not set\r\n");
         return ;
     }
+    if (!this->nick_is_set)
+    {
+        this->server.sendMsg(this->getFd(), ":IRC 434 " + (this->getNick().empty() ? "*" : this->getNick()) + " :Nick is not set\r\n");
+        return ;
+    }
     if (this->isRegistered)
     {
         this->server.sendMsg(this->getFd(), ":IRC 462 " + this->commande_splited[0] +  " :You may not reregister\r\n");
@@ -141,7 +143,10 @@ void Client::userCmd()
     this->setUser(commande_splited[1]);
     auth[2] = true;
     if (auth[0] && auth[1] && auth[2])
+    {
         this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
+        this->isRegistered = true;
+    }
 }
 
 void Client::execute()

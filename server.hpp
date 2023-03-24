@@ -99,6 +99,7 @@ class Server
        void _execute_commands(Client *clien);
        void _joinCmd(Client *client);
        void _modeCmd(Client *client);
+       void _privMsgCmd(Client *client);
 };
 
 

@@ -26,6 +26,7 @@ class Client
         std::string hostName;
         bool        isRegistered;
         bool        pass_is_set;
+        bool        nick_is_set;
         bool        auth[3];
         friend class Server;
         Server &server;

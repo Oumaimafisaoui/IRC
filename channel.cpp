@@ -32,7 +32,7 @@ void Channel::addMember(Client *_client, std::string password)
         _clientList.insert(_client);
         sendToOne(_client->getFd(), _client->getNick() + " :just joined the Channel " + this->_name + "\n");
         if (_topic != "")
-            sendToOne(_client->getFd(), _client->getNick() + " " + this->_name + " :" this->_topic + "\n");
+            sendToOne(_client->getFd(), _client->getNick() + " " + this->_name + " :" + this->_topic + "\n");
     }
 }
 
