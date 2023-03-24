@@ -82,6 +82,7 @@ class Server
         void printAllClients();
         Channel *_findChannel(std::string name);
         Client *findClientByNick(std::string name);
+        std::vector<std::string> joinCmdParser(std::string params);
     private:
        int fd;
         std::string password;

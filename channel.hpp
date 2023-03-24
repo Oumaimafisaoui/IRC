@@ -21,13 +21,13 @@ class Channel {
         Client *_owner;
         std::string _topic;
     public:
-        Channel(std::string name, Client *_client);
+        Channel(std::string name, Client *_client, std::string password);
         std::string getChannelName();
         std::set<Client *> getClients();
         void addMember(Client *_client, std::string password);
         void removeMember(Client *_client);
         bool isMember(Client *_client);
-        void sendToMembers(std::string message);
+        void sendToMembers(std::string message, int fd);
         void sendToOne(int fd, std::string message);
 
         void setTopic(std::string _topic);

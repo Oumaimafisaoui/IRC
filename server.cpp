@@ -382,69 +382,84 @@ Channel *Server::_findChannel(std::string name)
 
 Client *Server::findClientByNick(std::string nick)
 {
-    size_t size;
+    std::map<int, Client*>::iterator iter;
+    iter = clients.begin();
 
-    size = clients.size();
-    for (size_t i = 0; i < size; i++)
+    while (iter != clients.end())
     {
-        std::cerr << clients[i] << endl;
-        if (clients[i]->getNick() == nick)
-            return clients[i];
+        if ((*iter).second->getNick() == nick)
+            return  (*iter).second;
+        iter++;
     }
     return (NULL);
+}
+
+std::vector<std::string> Server::joinCmdParser(std::string params)
+{
+    std::vector<std::string> ret;
+    std::string temp = "";
+    for (int i = 0; params[i]; i++)
+    {
+        if (params[i] == ',')
+        {
+            ret.push_back(temp);
+            temp = "";
+        }
+        else
+            temp += params[i];
+    }
+    ret.push_back(temp);
+    return ret;
 }
 
 
 void Server::_execute_commands(Client *client) 
 {
     std::cout << "enter" << std::endl;
-
     if (client->commande_splited[0] == "JOIN" || client->commande_splited[0] == "join")
         _joinCmd(client);
     if (client->commande_splited[0] == "MODE" || client->commande_splited[0] == "mode")
         _modeCmd(client);
+    std::cout << "out" << std::cout;
 }
 
 void Server::_joinCmd(Client *client)
 {
-    std::cout << "join " << std::endl;
-    int index;
     int size = client->commande_splited.size();
     std::vector<std::string> passwords;
     std::vector<std::string> channels;
     Channel *newChanel;
-    index = 1;
-    while (client->commande_splited[index][0] == '#')
-        channels.push_back(client->commande_splited[index++]);
-    if (index == 1)
-        sendMsg(client->getFd(), "Channel name has to start by #\n");
-    else
+    if (size < 2)
     {
-        while(index < size)
-            passwords.push_back(client->commande_splited[index++]);
-        passwords.resize(channels.size(), "");
-        size = channels.size();
-        for (int i = 0; i < size; i++)
+        return ;
+    }
+    channels = this->joinCmdParser(client->commande_splited[1]);
+    if (client->commande_splited[2].size())
+        passwords = this->joinCmdParser(client->commande_splited[2]);
+    passwords.resize(channels.size(), "");
+    size = channels.size();
+    for (int i = 0; i < size; i++)
+    {
+        if (channels[i][0] == '#' || channels[i][0] == '&')
         {
             Channel *channel = _findChannel(channels[i]);
             if (!channel)
             {
-                newChanel = new Channel(channels[i], client);
+                newChanel = new Channel(channels[i], client, passwords[i]);
                 _channels.push_back(newChanel);
             }
             else
                 channel->addMember(client, passwords[i]);
         }
     }
-    std::cout << "join out" << std::endl;
 }
 
 void Server::_modeCmd(Client *client)
 {
-    for (size_t i = 0; i < client->commande_splited.size(); i++)
-    {
-        std::cout << client->commande_splited[i] << std::endl;
-    }
+    // for (size_t i = 0; i < client->commande_splited.size(); i++)
+    // {
+    //     std::cout << client->commande_splited[i] << std::endl;
+    // }
     if (client->commande_splited.size() < 3)
     {
         sendMsg(client->getFd(), "This command require more params\n");
@@ -466,9 +481,7 @@ void Server::_modeCmd(Client *client)
         channel->setModes(mode, client, "");
     else if (mode == "+o" || mode == "-o")
     {
-        std::cerr << client->commande_splited.size() << '\n';
         Client *Newclient = findClientByNick(client->commande_splited[3]);
-        std::cerr << "cli: " << Newclient << std::endl;
         if (!Newclient)
             sendMsg(client->getFd(), "This client does not exist in our server\n");
         else
