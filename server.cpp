@@ -45,6 +45,11 @@ int Server::get_fd() const
 }
 
 
+// std::map<int, Client>   Server::getClients()
+// {
+//     return (this->clients);
+// }
+
 Server::~Server(void)
 {
     std::cout << "Distructor for server is called" << std::endl;
@@ -117,6 +122,14 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         {
             close(i->fd);
             this->poll_vec.erase(i);
+            struct sockaddr_un addr;
+            socklen_t addr_len = sizeof(addr);
+            if (getsockname(i->fd, (struct sockaddr *)&addr, &addr_len) == 0)
+            {
+                // Unlink the socket file
+                unlink(addr.sun_path);
+            }
+
             std::cout << "client went away!!" << std::endl;
             return ;
         }
@@ -213,9 +226,6 @@ void Server::client_not_connected(Client *client)
         message_split.push_back(command);
    }
  
-    // for (unsigned int i = 0;i < message_split.size();++i)
-    //         std::cerr << message_split[i];
-    
    while (k < message_split.size())
    {
         pos_it = 0;
@@ -243,18 +253,10 @@ void Server::client_not_connected(Client *client)
             client->execute();
         }
         command_split.clear();
-        //should i clear it ?
         this->client->buff_client.clear();
         ++k; 
    }
 
-    //display the output 
-    // std::size_t x = 0;
-    // while (x < client->commande_splited.size())
-    // {
-    //     std::cout << x << "the splited command : {" <<  command_split[x] << "} \n";
-    //     x++;
-    // }
 }
 
 
@@ -311,6 +313,25 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                     close(client_fd);
                }
                continue;
+            }
+            else if (current.revents & POLLHUP) // check if the client socket has hung up
+            {
+                std::cout << "Client disconnected!" << std::endl;
+                close(current.fd);
+                poll_vec.erase(poll_vec.begin() + i);
+
+                // Get the filename associated with the socket
+                struct sockaddr_un addr;
+                socklen_t addr_len = sizeof(addr);
+                if (getsockname(current.fd, (struct sockaddr *)&addr, &addr_len) == 0)
+                {
+                    // Unlink the socket file
+                    unlink(addr.sun_path);
+                }
+
+                // Remove the client from the clients map
+                clients.erase(current.fd);
+                continue;
             }
             else 
             {
@@ -427,8 +448,20 @@ void Server::_execute_commands(Client *client)
 
 void Server::_privMsgCmd(Client *client)
 {
-    std::cerr << "jhello" << client->getFd() << std::endl;
-    send(client->getFd(), "hello", 5, 0);
+    //put all clients in a vector
+
+    //take all the clients that are in the command inside another vector
+    //take the message from the command and put it ina string
+    //if it is a chanel we send a message there
+    //else, find each client inside the command and send it the message
+    (void)client;
+    if (this->_command_splited.size() < 2)
+    {
+        std::cout << "Error: not enough arguments" << std::endl;
+        return;
+    }
+
+
 }
 
 
