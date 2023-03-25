@@ -435,6 +435,7 @@ void Server::_privMsgCmd(Client *client)
 
 void Server::_joinCmd(Client *client)
 {
+    std::cout << " -- Enter in Join Function --\n"; 
     int size = client->commande_splited.size();
     std::vector<std::string> passwords;
     std::vector<std::string> channels;
@@ -462,10 +463,12 @@ void Server::_joinCmd(Client *client)
                 channel->addMember(client, passwords[i]);
         }
     }
+    std::cout << " -- Out in Mode Function --\n"; 
 }
 
 void Server::_modeCmd(Client *client)
 {
+    std::cout << " -- Enter in Mode Function --\n"; 
     if (client->commande_splited.size() < 3)
     {
         sendMsg(client->getFd(), "This command require more params\n");
@@ -499,6 +502,7 @@ void Server::_modeCmd(Client *client)
         channel->setModes(mode, client, "");
     else 
         sendMsg(client->getFd(), client->getNick() + " " + mode + " :is unknown mode char to me\n");
+    std::cout << " -- Out in Mode Function --\n"; 
 }
 
 
