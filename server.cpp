@@ -420,8 +420,18 @@ void Server::_execute_commands(Client *client)
         _joinCmd(client);
     if (client->commande_splited[0] == "MODE" || client->commande_splited[0] == "mode")
         _modeCmd(client);
-    std::cout << "out" << std::cout;
+    if (client->commande_splited[0] == "PRIVMSG" || client->commande_splited[0] == "privmsg")
+        _privMsgCmd(client);
 }
+
+
+void Server::_privMsgCmd(Client *client)
+{
+    std::cerr << "jhello" << client->getFd() << std::endl;
+    send(client->getFd(), "hello", 5, 0);
+}
+
+
 
 void Server::_joinCmd(Client *client)
 {
