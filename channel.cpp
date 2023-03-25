@@ -28,12 +28,12 @@ void Channel::addMember(Client *_client, std::string password)
     {
         if (invitedLists.find(_client->getNick()) == invitedLists.end())
         {
-            sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + "Cannot join channel (+i)" );
+            sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + "Cannot join channel (+i)\n" );
             return ;
         }
     }
     if (password != this->_password && this->_password != "")
-        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + "Cannot join channel (+k)" );
+        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + "Cannot join channel (+k)\n" );
     else if (isMember(_client))
         sendToOne(_client->getFd(), "You've already joined this channel\n");
     else

@@ -437,6 +437,7 @@ std::vector<std::string> Server::joinCmdParser(std::string params)
 void Server::_execute_commands(Client *client) 
 {
     std::cout << "enter" << std::endl;
+    std::cout << client->commande_splited[0] << std::endl;
     if (client->commande_splited[0] == "JOIN" || client->commande_splited[0] == "join")
         _joinCmd(client);
     if (client->commande_splited[0] == "MODE" || client->commande_splited[0] == "mode")

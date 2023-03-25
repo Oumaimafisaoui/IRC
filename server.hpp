@@ -17,6 +17,7 @@
 #include <algorithm>
 #include "client.hpp"
 #include "channel.hpp"
+#include <sys/un.h>
 
 # define FAMILY AF_INET
 # define TYPE SOCK_STREAM
