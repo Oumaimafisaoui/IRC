@@ -1,10 +1,12 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
-
+#include <sstream>
 #include <netinet/in.h>
 #include <utility>
 #include <string>
 #include <sys/socket.h>
+#include <sys/socket.h>
+#include <sys/un.h> 
 #include <unistd.h>
 #include <iostream>
 #include <exception>
@@ -16,6 +18,7 @@
 #include <map>
 #include <algorithm>
 #include "client.hpp"
+#include <numeric>
 #include "channel.hpp"
 
 # define FAMILY AF_INET
@@ -83,6 +86,7 @@ class Server
         Channel *_findChannel(std::string name);
         Client *findClientByNick(std::string name);
         std::vector<std::string> joinCmdParser(std::string params);
+        std::map<int, Client> getClients();
     private:
        int fd;
         std::string password;

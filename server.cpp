@@ -122,14 +122,6 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         {
             close(i->fd);
             this->poll_vec.erase(i);
-            struct sockaddr_un addr;
-            socklen_t addr_len = sizeof(addr);
-            if (getsockname(i->fd, (struct sockaddr *)&addr, &addr_len) == 0)
-            {
-                // Unlink the socket file
-                unlink(addr.sun_path);
-            }
-
             std::cout << "client went away!!" << std::endl;
             return ;
         }
@@ -328,7 +320,6 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                     // Unlink the socket file
                     unlink(addr.sun_path);
                 }
-
                 // Remove the client from the clients map
                 clients.erase(current.fd);
                 continue;
