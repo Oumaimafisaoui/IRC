@@ -23,8 +23,17 @@ std::set<Client *> Channel::getClients()
 
 void Channel::addMember(Client *_client, std::string password)
 {
+    std::cout << " addMember" << std::endl;
+    if (checkModes("+i"))
+    {
+        if (invitedLists.find(_client->getNick()) == invitedLists.end())
+        {
+            sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + "Cannot join channel (+i)" );
+            return ;
+        }
+    }
     if (password != this->_password && this->_password != "")
-        sendToOne(_client->getFd(), "Permission denied Please put a good password\n");
+        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + "Cannot join channel (+k)" );
     else if (isMember(_client))
         sendToOne(_client->getFd(), "You've already joined this channel\n");
     else
@@ -32,8 +41,9 @@ void Channel::addMember(Client *_client, std::string password)
         _clientList.insert(_client);
         sendToOne(_client->getFd(), _client->getNick() + " :just joined the Channel " + this->_name + "\n");
         if (_topic != "")
-            sendToOne(_client->getFd(), _client->getNick() + " " + this->_name + " :" this->_topic + "\n");
+            sendToOne(_client->getFd(), _client->getNick() + " " + this->_name + " :" + this->_topic + "\n");
     }
+    std::cout << " out addMember" << std::endl;
 }
 
 void Channel::removeMember(Client *_client)
@@ -81,7 +91,7 @@ bool Channel::isOperator(Client *_client)
 {
     if (this->_operators.find(_client->getNick()) == this->_operators.end())
     {
-        sendToOne(_client->getFd(), "Permission Denied: You can't set the mode of this channel Only a Operator is allowed\n" );
+        sendToOne(_client->getFd(), _client->getNick() + " " + _name + " :You're not channel operator\n" );
         return false;
     }
     return true;
@@ -100,14 +110,14 @@ void Channel::setModes(std::string _mode, Client *client, std::string arg)
         else if (_mode == "+o")
         {
             if (!getMemberByNick(arg))
-                sendToOne(client->getFd(), "This user is not this Channel\n" );
+                sendToOne(client->getFd(), client->getNick() + " " + _name +  " :No such nick/channel" );
             else
                 _operators.insert(arg);
         }
         else if (_mode == "-o")
         {
             if (!getMemberByNick(arg))
-                sendToOne(client->getFd(), "This user is not this Channel\n" );
+                sendToOne(client->getFd(), client->getNick() + " " + _name +  " :No such nick/channel");
             else
                 _operators.erase(arg);
         }
@@ -115,6 +125,7 @@ void Channel::setModes(std::string _mode, Client *client, std::string arg)
             this->_password = arg;
         else if (_mode == "-k")
             this->_password = "";
+        std::cout << _password << std::endl;
     }
 }
 

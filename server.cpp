@@ -456,10 +456,6 @@ void Server::_joinCmd(Client *client)
 
 void Server::_modeCmd(Client *client)
 {
-    // for (size_t i = 0; i < client->commande_splited.size(); i++)
-    // {
-    //     std::cout << client->commande_splited[i] << std::endl;
-    // }
     if (client->commande_splited.size() < 3)
     {
         sendMsg(client->getFd(), "This command require more params\n");
@@ -474,7 +470,7 @@ void Server::_modeCmd(Client *client)
     }
     if (!channel)
     {
-        sendMsg(client->getFd(), "This channnel does not exist in our server\n");
+        sendMsg(client->getFd(), client->getNick() + " " + client->commande_splited[1] +   " :No such channel\n");
         return ;
     }
     if (mode == "+i" || mode == "-i" || mode == "+t" || mode == "-t")
@@ -483,7 +479,7 @@ void Server::_modeCmd(Client *client)
     {
         Client *Newclient = findClientByNick(client->commande_splited[3]);
         if (!Newclient)
-            sendMsg(client->getFd(), "This client does not exist in our server\n");
+            sendMsg(client->getFd(), client->getNick() + " " + client->commande_splited[3] +   " :No such user\n");
         else
             channel->setModes(mode, client, client->commande_splited[3]);
     }
@@ -492,7 +488,7 @@ void Server::_modeCmd(Client *client)
     else if (mode == "-k")
         channel->setModes(mode, client, "");
     else 
-        sendMsg(client->getFd(), "Invalid  argument please put the right argument\n");
+        sendMsg(client->getFd(), client->getNick() + " " + mode + " :is unknown mode char to me\n");
 }
 
 
