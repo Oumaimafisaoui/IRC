@@ -105,6 +105,7 @@ class Server
        void _joinCmd(Client *client);
        void _modeCmd(Client *client);
        void _privMsgCmd(Client *client);
+       void _NoticeCmd(Client *client);
 };
 
 

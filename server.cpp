@@ -455,6 +455,8 @@ void Server::_execute_commands(Client *client)
         _modeCmd(client);
     if (client->commande_splited[0] == "PRIVMSG" || client->commande_splited[0] == "privmsg")
         _privMsgCmd(client);
+    if (client->commande_splited[0] == "NOTICE" || client->commande_splited[0] == "notice")
+        _NoticeCmd(client);
 }
 
 
@@ -621,6 +623,155 @@ void Server::_privMsgCmd(Client *client)
 }
 
 
+
+
+void Server::_NoticeCmd(Client *client)
+{
+    if (client->commande_splited.size() < 2)
+        return;
+    // to accumalate all the arguments
+    std::ostringstream oss;
+    std::copy(client->commande_splited.begin(), client->commande_splited.end(), std::ostream_iterator<std::string>(oss, " "));
+    std::string commands = oss.str();
+
+    size_t dots = commands.find_last_of(":");
+    std::string message;
+    std::vector<std::string> targets;
+    std::string command;
+    size_t pos = 8;
+    size_t end = 0;
+    
+    if (dots == std::string::npos)
+        return;
+    message = commands.substr(dots, commands.size() - dots); 
+    if (client->commande_splited.size() == 3)
+    {
+        if (client->commande_splited[1].find(',') != std::string::npos)
+        {
+            while((end = commands.find(",", pos)) != std::string::npos)
+            {
+                    command  = commands.substr(pos, end - pos);
+                    targets.push_back(command);
+                    pos = end + 1;
+            }
+            if(pos < commands.length())
+            {
+                command = commands.substr(pos, dots - pos -1);
+                targets.push_back(command);
+            }
+            for (size_t i = 0; i < targets.size(); i++)
+            {
+                std::string& target = targets[i];
+                size_t pos = 0;
+                while ((pos = target.find(' ', pos)) != std::string::npos)
+                {
+                    target.erase(pos, 1);
+                }
+                targets[i] = target;
+                if (targets[i][0] == '#')
+                {
+                    Channel *tmp = find_channel(client->commande_splited[1]);
+                    if (!tmp)
+                        return ;
+                    //send message to all the clients in the channel
+                    const std::set<Client*>& clients = tmp->getClients(); // create a reference to a copy of the set
+
+                    for (std::set<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
+                    {
+                        sendMsg((*it)->getFd(), ":" + client->getHost() + " NOTICE " + tmp->getChannelName() + " " + message + "\r\n");
+                    }
+                }
+                else
+                {
+                    Client *tmp = find_client(targets[i]);
+                    std::cout << ":" << targets[i] << ":" << std::endl;
+                    if (!tmp)
+                    {
+                        return ;
+                    }
+                    sendMsg(tmp->getFd(), ":" + client->getHost() + " NOTICE " + tmp->getNick() + " " + message + "\r\n");
+                }
+            }
+        }
+        else
+        {
+            if (client->commande_splited[1][0] == '#')
+            {
+                Channel *tmp = find_channel(client->commande_splited[1]);
+                if (!tmp)
+                {
+                    return ;
+                }
+                //send message to all the clients in the channel
+                const std::set<Client*>& clients = tmp->getClients(); // create a reference to a copy of the set
+
+                for (std::set<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
+                {
+                    sendMsg((*it)->getFd(), ":" + client->getHost() + " NOTICE " + tmp->getChannelName() + " " + message + "\r\n");
+                }
+            }
+            else
+            {
+                Client *tmp = find_client(client->commande_splited[1]);
+                if (!tmp)
+                {
+                    return ;
+                }
+                sendMsg(tmp->getFd(), ":" + client->getHost() + " NOTICE " + tmp->getNick() + " " + message + "\r\n");
+            }
+        }
+    }
+    else
+    {
+        while((end = commands.find(",", pos)) != std::string::npos)
+        {
+                command  = commands.substr(pos, end - pos);
+                targets.push_back(command);
+                pos = end + 1;
+        }
+        if(pos < commands.length())
+        {
+            command = commands.substr(pos, dots - pos -1);
+            targets.push_back(command);
+        }
+        for (size_t i = 0; i < targets.size(); i++)
+        {
+            std::string& target = targets[i];
+            size_t pos = 0;
+            while ((pos = target.find(' ', pos)) != std::string::npos)
+            {
+                target.erase(pos, 1);
+            }
+            targets[i] = target;
+            if (targets[i][0] == '#')
+            {
+                Channel *tmp = find_channel(targets[i]);
+                if (!tmp)
+                {
+                    return ;
+                }
+                //send message to all the clients in the channel
+                const std::set<Client*>& clients = tmp->getClients(); // create a reference to a copy of the set
+
+                for (std::set<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
+                {
+                    sendMsg((*it)->getFd(), ":" + client->getHost() + " NOTICE " + tmp->getChannelName() + " " + message + "\r\n");
+                }
+            }
+            else
+            {
+                Client *tmp = find_client(targets[i]);
+                std::cout << ":" << targets[i] << ":" << std::endl;
+                if (!tmp)
+                {
+                    return ;
+                }
+                sendMsg(tmp->getFd(), ":" + client->getHost() + " NOTICE " + tmp->getNick() + " " + message + "\r\n");
+            }
+        }
+        
+    }
+}
 
 void Server::_joinCmd(Client *client)
 {
