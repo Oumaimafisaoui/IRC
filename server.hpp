@@ -20,6 +20,7 @@
 #include "client.hpp"
 #include <numeric>
 #include "channel.hpp"
+#include <sys/un.h>
 
 # define FAMILY AF_INET
 # define TYPE SOCK_STREAM
@@ -106,6 +107,9 @@ class Server
        void _modeCmd(Client *client);
        void _privMsgCmd(Client *client);
        void _NoticeCmd(Client *client);
+       void _topicCmd(Client *client);
+       void _inviteCmd(Client *client);
+       
 };
 
 

@@ -449,6 +449,7 @@ std::vector<std::string> Server::joinCmdParser(std::string params)
 void Server::_execute_commands(Client *client) 
 {
     std::cout << "enter" << std::endl;
+    std::cout << client->commande_splited[0] << std::endl;
     if (client->commande_splited[0] == "JOIN" || client->commande_splited[0] == "join")
         _joinCmd(client);
     if (client->commande_splited[0] == "MODE" || client->commande_splited[0] == "mode")
@@ -457,6 +458,10 @@ void Server::_execute_commands(Client *client)
         _privMsgCmd(client);
     if (client->commande_splited[0] == "NOTICE" || client->commande_splited[0] == "notice")
         _NoticeCmd(client);
+    if (client->commande_splited[0] == "TOPIC" || client->commande_splited[0] == "topic")
+        _topicCmd(client);
+    if (client->commande_splited[0] == "INVITE" || client->commande_splited[0] == "invite")
+        _inviteCmd(client);
 }
 
 
@@ -806,25 +811,21 @@ void Server::_joinCmd(Client *client)
 
 void Server::_modeCmd(Client *client)
 {
-    // for (size_t i = 0; i < client->commande_splited.size(); i++)
-    // {
-    //     std::cout << client->commande_splited[i] << std::endl;
-    // }
     if (client->commande_splited.size() < 3)
     {
-        sendMsg(client->getFd(), "This command require more params\n");
+        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
         return ;
     }
     Channel *channel = _findChannel(client->commande_splited[1]);
     std::string mode = client->commande_splited[2];
     if (client->commande_splited.size() < 4 && (mode == "+o" || mode == "+k" || mode == "-o"))
     {
-        sendMsg(client->getFd(), "This command require more params\n");
+        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
         return ;
     }
     if (!channel)
     {
-        sendMsg(client->getFd(), "This channnel does not exist in our server\n");
+        sendMsg(client->getFd(), client->getNick() + " " + client->commande_splited[1] +   " :No such channel\n");
         return ;
     }
     if (mode == "+i" || mode == "-i" || mode == "+t" || mode == "-t")
@@ -833,7 +834,7 @@ void Server::_modeCmd(Client *client)
     {
         Client *Newclient = findClientByNick(client->commande_splited[3]);
         if (!Newclient)
-            sendMsg(client->getFd(), "This client does not exist in our server\n");
+            sendMsg(client->getFd(), client->getNick() + " " + client->commande_splited[3] +   " :No such user\n");
         else
             channel->setModes(mode, client, client->commande_splited[3]);
     }
@@ -842,7 +843,42 @@ void Server::_modeCmd(Client *client)
     else if (mode == "-k")
         channel->setModes(mode, client, "");
     else 
-        sendMsg(client->getFd(), "Invalid  argument please put the right argument\n");
+        sendMsg(client->getFd(), client->getNick() + " " + mode + " :is unknown mode char to me\n");
 }
 
 
+void Server::_topicCmd(Client *client) 
+{
+    int n;
+    std::string topic;
+    if (client->commande_splited.size() < 2)
+    {
+        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
+        return ;
+    }
+    n = client->commande_splited.size() == 2 ? 1 : 0;
+    topic = client->commande_splited.size() == 2 ? "" : client->commande_splited[2];
+    Channel *channel = _findChannel(client->commande_splited[1]);
+    if (!channel)
+    {
+        sendMsg(client->getFd(), client->getNick() + " " + client->commande_splited[1] +   " :No such channel\n");
+        return ;
+    }
+    channel->setTopic(topic, client, n);
+}
+
+void Server::_inviteCmd(Client *client)
+{
+    if (client->commande_splited.size() < 3)
+    {
+        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
+        return ;
+    }
+    Channel *channel = _findChannel(client->commande_splited[2]);
+    if (!channel)
+    {
+        sendMsg(client->getFd(), client->getNick() + " " + client->commande_splited[2] +   " :No such channel\n");
+        return ;
+    }
+    channel->addInvited(client->commande_splited[1], client);
+}
