@@ -112,6 +112,9 @@ class Server
        void _topicCmd(Client *client);
        void _inviteCmd(Client *client);
        void _botCmd(Client *client);     
+
+       void _partCmd(Client *client);
+    
 };
 
 

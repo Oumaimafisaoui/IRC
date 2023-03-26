@@ -200,7 +200,7 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         if (len == 0)
         {
             close(i->fd);
-            this->poll_vec.erase(i);
+            clients.erase(i->fd);
             std::cout << "client went away!!" << std::endl;
             return ;
         }
@@ -375,23 +375,9 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                }
                continue;
             }
-            else if (current.revents & POLLHUP) // check if the client socket has hung up
-            {
-                std::cout << "Client disconnected!" << std::endl;
-                close(current.fd);
-                poll_vec.erase(poll_vec.begin() + i);
-                struct sockaddr_un addr;
-                socklen_t addr_len = sizeof(addr);
-                if (getsockname(current.fd, (struct sockaddr *)&addr, &addr_len) == 0)
-                {
-                    // Unlink the socket file
-                    unlink(addr.sun_path);
-                }
-                clients.erase(current.fd);
-                continue;
-            }
             else 
             {
+                std::cout << "client sending message" << std::endl;
                 std::memset(&this->buffer, 0, sizeof(this->buffer));
                 int len = recv(current.fd, this->buffer, 500, 0);
                 // std::cout << "This is the this->buffer value: " << this->buffer << std::endl; 
@@ -478,7 +464,7 @@ std::vector<std::string> Server::joinCmdParser(std::string params)
 {
     std::vector<std::string> ret;
     std::string temp = "";
-    for (int i = 0; params[i]; i++)
+    for (size_t i = 0; i < params.length(); i++)
     {
         if (params[i] == ',')
         {
@@ -509,8 +495,10 @@ void Server::_execute_commands(Client *client)
         _topicCmd(client);
     if (client->commande_splited[0] == "INVITE" || client->commande_splited[0] == "invite")
         _inviteCmd(client);
-    if (client->commande_splited[0] == "/BOT" || client->commande_splited[0] == "/bot")
-        _botCmd(client);
+    // if (client->commande_splited[0] == "/BOT" || client->commande_splited[0] == "/bot")
+    //     _botCmd(client);
+    if (client->commande_splited[0] == "PART" || client->commande_splited[0] == "part")
+        _partCmd(client);
 }
 
 
@@ -930,4 +918,29 @@ void Server::_inviteCmd(Client *client)
         return ;
     }
     channel->addInvited(client->commande_splited[1], client);
+}
+
+void Server::_partCmd(Client *client)
+{
+    if (client->commande_splited.size() < 2)
+    {
+        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
+        return ;
+    }
+    std::vector<std::string> channels = joinCmdParser(client->commande_splited[1]);
+    std::vector<std::string> raisons;
+    if (client->commande_splited.size() > 2)
+        raisons = joinCmdParser(client->commande_splited[2]);
+    raisons.resize(channels.size(), "");
+    for (size_t i = 0; i < channels.size(); i++)
+    {
+        Channel *channel = _findChannel(channels[i]);
+        if (!channel)
+        {
+            sendMsg(client->getFd(), client->getNick() + " " + channels[i] +   " :No such channel\n");
+            return ;
+        }
+        else
+            channel->removeMember(client, raisons[i]);
+    }
 }

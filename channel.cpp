@@ -48,11 +48,6 @@ void Channel::addMember(Client *_client, std::string password)
     std::cout << password << std::endl;
 }
 
-void Channel::removeMember(Client *_client)
-{
-    _clientList.erase(_client);
-}
-
 bool Channel::isMember(Client *_client)
 {
     return _clientList.find(_client) != _clientList.end();
@@ -174,4 +169,27 @@ void Channel::addInvited(std::string nick, Client *_client)
     }
     invitedLists.insert(nick);
     sendToOne(_client->getFd(), "Invite " + nick + " to " + _name +  "\n");
+}
+
+void Channel::removeMember(Client *_client, std::string raison)
+{
+    if (!isMember(_client))
+    {
+        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :You're not on that channel\n");
+        return ;
+    }
+    _clientList.erase(_client);
+    sendToMembers(_client->getNick() + "  is leaving the channel " + _name +  " " + raison + "\n", _client->getFd());
+    sendToOne(_client->getFd(), "leave channel \"" + _name + "\"\n"); 
+}
+
+
+void Channel::removeIt(Client *_client)
+{
+    if (isMember(_client))
+    {
+        _clientList.erase(_client);
+        return ;
+    }
+    return ;
 }
