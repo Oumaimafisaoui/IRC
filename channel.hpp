@@ -26,7 +26,7 @@ class Channel {
         std::string getChannelName();
         std::set<Client *> getClients();
         void addMember(Client *_client, std::string password);
-        void removeMember(Client *_client);
+        void removeMember(Client *_client, std::string raison);
         bool isMember(Client *_client);
         void sendToMembers(std::string message, int fd);
         void sendToOne(int fd, std::string message);

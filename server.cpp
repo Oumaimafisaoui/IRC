@@ -410,7 +410,7 @@ std::vector<std::string> Server::joinCmdParser(std::string params)
 {
     std::vector<std::string> ret;
     std::string temp = "";
-    for (int i = 0; params[i]; i++)
+    for (size_t i = 0; i < params.length(); i++)
     {
         if (params[i] == ',')
         {
@@ -439,6 +439,8 @@ void Server::_execute_commands(Client *client)
         _topicCmd(client);
     if (client->commande_splited[0] == "INVITE" || client->commande_splited[0] == "invite")
         _inviteCmd(client);
+    if (client->commande_splited[0] == "PART" || client->commande_splited[0] == "part")
+        _partCmd(client);
 }
 
 
@@ -497,14 +499,14 @@ void Server::_modeCmd(Client *client)
 {
     if (client->commande_splited.size() < 3)
     {
-        sendMsg(client->getFd(), client->getNick() + " "  client->commande_splited[0] + " Not enough parameters\n");
+        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
         return ;
     }
     Channel *channel = _findChannel(client->commande_splited[1]);
     std::string mode = client->commande_splited[2];
     if (client->commande_splited.size() < 4 && (mode == "+o" || mode == "+k" || mode == "-o"))
     {
-        sendMsg(client->getFd(), client->getNick() + " "  client->commande_splited[0] + " Not enough parameters\n");
+        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
         return ;
     }
     if (!channel)
@@ -537,7 +539,7 @@ void Server::_topicCmd(Client *client)
     std::string topic;
     if (client->commande_splited.size() < 2)
     {
-        sendMsg(client->getFd(), client->getNick() + " "  client->commande_splited[0] + " Not enough parameters\n");
+        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
         return ;
     }
     n = client->commande_splited.size() == 2 ? 1 : 0;
@@ -555,7 +557,7 @@ void Server::_inviteCmd(Client *client)
 {
     if (client->commande_splited.size() < 3)
     {
-        sendMsg(client->getFd(), client->getNick() + " "  client->commande_splited[0] + " Not enough parameters\n");
+        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
         return ;
     }
     Channel *channel = _findChannel(client->commande_splited[2]);
@@ -565,4 +567,29 @@ void Server::_inviteCmd(Client *client)
         return ;
     }
     channel->addInvited(client->commande_splited[1], client);
+}
+
+void Server::_partCmd(Client *client)
+{
+    if (client->commande_splited.size() < 2)
+    {
+        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
+        return ;
+    }
+    std::vector<std::string> channels = joinCmdParser(client->commande_splited[1]);
+    std::vector<std::string> raisons;
+    if (client->commande_splited.size() > 2)
+        raisons = joinCmdParser(client->commande_splited[2]);
+    raisons.resize(channels.size(), "");
+    for (size_t i = 0; i < channels.size(); i++)
+    {
+        Channel *channel = _findChannel(channels[i]);
+        if (!channel)
+        {
+            sendMsg(client->getFd(), client->getNick() + " " + channels[i] +   " :No such channel\n");
+            return ;
+        }
+        else
+            channel->removeMember(client, raisons[i]);
+    }
 }
