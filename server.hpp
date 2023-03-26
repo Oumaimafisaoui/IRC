@@ -21,6 +21,8 @@
 #include <numeric>
 #include "channel.hpp"
 #include <sys/un.h>
+#include <curl/curl.h>
+
 
 # define FAMILY AF_INET
 # define TYPE SOCK_STREAM
@@ -109,8 +111,10 @@ class Server
        void _NoticeCmd(Client *client);
        void _topicCmd(Client *client);
        void _inviteCmd(Client *client);
+       void _botCmd(Client *client);     
+
        void _partCmd(Client *client);
-       
+    
 };
 
 

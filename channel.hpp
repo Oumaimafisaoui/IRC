@@ -42,6 +42,7 @@ class Channel {
         void setPassword(std::string _password);
         Client *getMemberByNick(std::string nick);
         bool checkModes(std::string _mode);
+        void removeIt(Client *_client);
 };
 
 #endif

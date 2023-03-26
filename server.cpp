@@ -44,11 +44,68 @@ int Server::get_fd() const
     return (this->fd);
 }
 
+// size_t handle_response(char* data, size_t size, size_t nmemb, std::string* buffer) {
+//     size_t content_start = 0, content_end = 0;
 
-// std::map<int, Client>   Server::getClients()
-// {
-//     return (this->clients);
+//     if (buffer != nullptr) {
+//         std::string str(data, size * nmemb);
+//         content_start = str.find("\"content\":\"") + 11;
+//         content_end = str.find("\",\"author\":");
+
+//         if (content_start != std::string::npos && content_end != std::string::npos) {
+//             buffer->clear(); // clear the buffer first
+//             buffer->append(str.substr(content_start, content_end - content_start));
+//         }
+//     }
+//     return size * nmemb;
 // }
+
+// void Server::_botCmd(Client *client)
+// {
+//     (void)client;
+//     // Initialize the global curl library
+//     curl_global_init(CURL_GLOBAL_DEFAULT);
+//     // Initialize the easy curl handle
+//     CURL *curl = curl_easy_init();
+
+//     // Check for errors
+//     if (!curl) {
+//         return ;
+//     }
+
+//     // Set the API URL
+//     std::string api_url = "https://api.quotable.io/random";
+//     curl_easy_setopt(curl, CURLOPT_URL, api_url.c_str());
+
+//     // Set the callback function for handling the response
+//     std::string buffer;
+//     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, handle_response);
+//     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+
+//     // Execute the API call
+//     CURLcode res = curl_easy_perform(curl);
+
+//     // Check for errors
+//     if (res != CURLE_OK) {
+//         return ;
+//     }
+
+//     // Cleanup libcurl
+//     curl_easy_cleanup(curl);
+//     // Cleanup the global curl library
+//     curl_global_cleanup();
+
+//     // Parse the JSON response
+//     size_t content_start = buffer.find("\"content\":\"") + 11;
+//     size_t content_end = buffer.find("\",\"author\":");
+//     std::string quote = buffer.substr(content_start, content_end - content_start);
+
+//     sendMsg(client->getFd(), quote);
+// }
+
+
+
+
 
 Server::~Server(void)
 {
@@ -143,7 +200,7 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         if (len == 0)
         {
             close(i->fd);
-            this->poll_vec.erase(i);
+            clients.erase(i->fd);
             std::cout << "client went away!!" << std::endl;
             return ;
         }
@@ -161,8 +218,6 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
             }
             if (client->buff_client.find('\n') != std::string::npos && client->buff_client.size() > 1)
             {
-                 // puts("found new line");
-                // std::cout << "new line found" << std::endl;
                 if (!client->checkIsRegister())
                     client_not_connected(client);
                 else
@@ -203,18 +258,10 @@ void Server::client_connected(Client *client)
     client->commande_splited.clear();
     client->buff_client.clear();
     command_split.clear();
-
-    // std::size_t x = 0;
-    // while (x < client->commande_splited.size())
-    // {
-    //     std::cout << x << " : {" <<  command_split[x] << "} \n";
-    //     x++;
-    // }
 }
 
 void Server::client_not_connected(Client *client)
 {
-    // puts("dante");
    std::vector<std::string> message_split;
    std::string command;
    size_t pos = 0;
@@ -328,23 +375,9 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                }
                continue;
             }
-            else if (current.revents & POLLHUP) // check if the client socket has hung up
-            {
-                std::cout << "Client disconnected!" << std::endl;
-                close(current.fd);
-                poll_vec.erase(poll_vec.begin() + i);
-                struct sockaddr_un addr;
-                socklen_t addr_len = sizeof(addr);
-                if (getsockname(current.fd, (struct sockaddr *)&addr, &addr_len) == 0)
-                {
-                    // Unlink the socket file
-                    unlink(addr.sun_path);
-                }
-                clients.erase(current.fd);
-                continue;
-            }
             else 
             {
+                std::cout << "client sending message" << std::endl;
                 std::memset(&this->buffer, 0, sizeof(this->buffer));
                 int len = recv(current.fd, this->buffer, 500, 0);
                 // std::cout << "This is the this->buffer value: " << this->buffer << std::endl; 
@@ -462,6 +495,8 @@ void Server::_execute_commands(Client *client)
         _topicCmd(client);
     if (client->commande_splited[0] == "INVITE" || client->commande_splited[0] == "invite")
         _inviteCmd(client);
+    // if (client->commande_splited[0] == "/BOT" || client->commande_splited[0] == "/bot")
+    //     _botCmd(client);
     if (client->commande_splited[0] == "PART" || client->commande_splited[0] == "part")
         _partCmd(client);
 }

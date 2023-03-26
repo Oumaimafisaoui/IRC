@@ -182,3 +182,14 @@ void Channel::removeMember(Client *_client, std::string raison)
     sendToMembers(_client->getNick() + "  is leaving the channel " + _name +  " " + raison + "\n", _client->getFd());
     sendToOne(_client->getFd(), "leave channel \"" + _name + "\"\n"); 
 }
+
+
+void Channel::removeIt(Client *_client)
+{
+    if (isMember(_client))
+    {
+        _clientList.erase(_client);
+        return ;
+    }
+    return ;
+}
