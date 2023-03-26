@@ -36,7 +36,7 @@ class Channel {
         void addOperator(std::string nick);
         void removeOperator(std::string nick);
         bool isOperator(Client *client);
-        void addInvited(std::string nick);
+        void addInvited(std::string nick, Client *_client);
         void removeInvited(std::string nick);
         void isInvited(std::string nick);
         void setPassword(std::string _password);

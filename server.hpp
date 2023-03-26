@@ -106,6 +106,8 @@ class Server
        void _modeCmd(Client *client);
        void _privMsgCmd(Client *client);
        void _topicCmd(Client *client);
+       void _inviteCmd(Client *client);
+       
 };
 
 

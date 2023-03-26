@@ -159,3 +159,19 @@ void Channel::setTopic(std::string newTopic, Client *_client, int n)
         sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + _topic + "\n");
     }
 }
+
+void Channel::addInvited(std::string nick, Client *_client)
+{
+    if (!isMember(_client))
+    {
+        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :You're not on that channel\n");
+        return ;
+    }
+    if (getMemberByNick(nick))
+    {
+        sendToOne(_client->getFd(), _client->getNick() +  " " + nick + " " + _name +  " :is already on channel\n" );
+        return ;
+    }
+    invitedLists.insert(nick);
+    sendToOne(_client->getFd(), "Invite " + nick + " to " + _name +  "\n");
+}
