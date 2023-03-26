@@ -15,7 +15,8 @@ class Channel {
         std::set<Client *> _clientList;
         std::string _name;
         std::set<std::string> _operators;
-        std::set<std::string> _modes;
+        bool _inviteMode;
+        bool _topicMode;
         std::set<std::string> invitedLists;
         std::string _password;
         Client *_owner;
@@ -30,7 +31,7 @@ class Channel {
         void sendToMembers(std::string message, int fd);
         void sendToOne(int fd, std::string message);
 
-        void setTopic(std::string _topic);
+        void setTopic(std::string _topic, Client *_client, int n);
         void setModes(std::string _mode, Client *client, std::string arg);
         void addOperator(std::string nick);
         void removeOperator(std::string nick);

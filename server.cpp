@@ -122,14 +122,6 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         {
             close(i->fd);
             this->poll_vec.erase(i);
-            struct sockaddr_un addr;
-            socklen_t addr_len = sizeof(addr);
-            if (getsockname(i->fd, (struct sockaddr *)&addr, &addr_len) == 0)
-            {
-                // Unlink the socket file
-                unlink(addr.sun_path);
-            }
-
             std::cout << "client went away!!" << std::endl;
             return ;
         }
@@ -328,7 +320,6 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                     // Unlink the socket file
                     unlink(addr.sun_path);
                 }
-
                 // Remove the client from the clients map
                 clients.erase(current.fd);
                 continue;
@@ -444,6 +435,8 @@ void Server::_execute_commands(Client *client)
         _modeCmd(client);
     if (client->commande_splited[0] == "PRIVMSG" || client->commande_splited[0] == "privmsg")
         _privMsgCmd(client);
+    if (client->commande_splited[0] == "TOPIC" || client->commande_splited[0] == "topic")
+        _topicCmd(client);
 }
 
 
@@ -469,7 +462,6 @@ void Server::_privMsgCmd(Client *client)
 
 void Server::_joinCmd(Client *client)
 {
-    std::cout << " -- Enter in Join Function --\n"; 
     int size = client->commande_splited.size();
     std::vector<std::string> passwords;
     std::vector<std::string> channels;
@@ -497,12 +489,10 @@ void Server::_joinCmd(Client *client)
                 channel->addMember(client, passwords[i]);
         }
     }
-    std::cout << " -- Out in Mode Function --\n"; 
 }
 
 void Server::_modeCmd(Client *client)
 {
-    std::cout << " -- Enter in Mode Function --\n"; 
     if (client->commande_splited.size() < 3)
     {
         sendMsg(client->getFd(), "This command require more params\n");
@@ -536,7 +526,26 @@ void Server::_modeCmd(Client *client)
         channel->setModes(mode, client, "");
     else 
         sendMsg(client->getFd(), client->getNick() + " " + mode + " :is unknown mode char to me\n");
-    std::cout << " -- Out in Mode Function --\n"; 
 }
 
+
+void Server::_topicCmd(Client *client) 
+{
+    int n;
+    std::string topic;
+    if (client->commande_splited.size() < 2)
+    {
+        sendMsg(client->getFd(), "This command require more params\n");
+        return ;
+    }
+    n = client->commande_splited.size() == 2 ? 1 : 0;
+    topic = client->commande_splited.size() == 2 ? "" : client->commande_splited[2];
+    Channel *channel = _findChannel(client->commande_splited[1]);
+    if (!channel)
+    {
+        sendMsg(client->getFd(), client->getNick() + " " + client->commande_splited[1] +   " :No such channel\n");
+        return ;
+    }
+    channel->setTopic(topic, client, n);
+}
 

@@ -7,6 +7,8 @@ Channel::Channel(std::string name, Client *_client, std::string password)
     this->_operators.insert(_client->getNick());
     _clientList.insert(_client);
     this->_password = password;
+    this->_inviteMode = false;
+    this->_topicMode = false;
     this->_topic = "";
     sendToOne(_client->getFd(), this->_name + " channel succesful created\n");
 }
@@ -23,8 +25,8 @@ std::set<Client *> Channel::getClients()
 
 void Channel::addMember(Client *_client, std::string password)
 {
-    std::cout << " addMember" << std::endl;
-    if (checkModes("+i"))
+    std::cout << this->_password << std::endl;
+    if (this->_inviteMode)
     {
         if (invitedLists.find(_client->getNick()) == invitedLists.end())
         {
@@ -43,7 +45,7 @@ void Channel::addMember(Client *_client, std::string password)
         if (_topic != "")
             sendToOne(_client->getFd(), _client->getNick() + " " + this->_name + " :" + this->_topic + "\n");
     }
-    std::cout << " out addMember" << std::endl;
+    std::cout << password << std::endl;
 }
 
 void Channel::removeMember(Client *_client)
@@ -101,23 +103,25 @@ void Channel::setModes(std::string _mode, Client *client, std::string arg)
 {
     if (isOperator(client))
     {
-        if (_mode == "+t" || _mode == "+i")
-            this->_modes.insert(_mode);
+        if (_mode == "+t")
+            this->_topicMode = true;
+        else if (_mode == "+i")
+            this->_inviteMode = true;
         else if (_mode == "-t")
-            this->_modes.erase("+t");
+            this->_topicMode = false;
         else if (_mode == "-i")
-            this->_operators.erase("+i");
+            this->_inviteMode = false;
         else if (_mode == "+o")
         {
             if (!getMemberByNick(arg))
-                sendToOne(client->getFd(), client->getNick() + " " + _name +  " :No such nick/channel" );
+                sendToOne(client->getFd(), client->getNick() + " " + _name +  " :No such nick/channel\n" );
             else
                 _operators.insert(arg);
         }
         else if (_mode == "-o")
         {
             if (!getMemberByNick(arg))
-                sendToOne(client->getFd(), client->getNick() + " " + _name +  " :No such nick/channel");
+                sendToOne(client->getFd(), client->getNick() + " " + _name +  " :No such nick/channel\n");
             else
                 _operators.erase(arg);
         }
@@ -129,9 +133,29 @@ void Channel::setModes(std::string _mode, Client *client, std::string arg)
     }
 }
 
-bool Channel::checkModes(std::string _mode)
+void Channel::setTopic(std::string newTopic, Client *_client, int n)
 {
-    if (this->_modes.find(_mode) != this->_modes.end())
-        return true;
-    return false;
+    if (!isMember(_client))
+    {
+        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :You're not on that channel\n");
+        return ;
+    }
+    if (_topicMode)
+    {
+        if (!this->isOperator(_client))
+            return ;
+    }
+    if (n)
+    {
+        if (_topic == "")
+            sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :No topic is set\n");
+        else
+            sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + _topic + "\n");
+    }
+    else
+    {
+        _topic = newTopic;
+        sendToMembers(_client->getNick() + " " + _name +  " :" + _topic + "\n", _client->getFd());
+        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + _topic + "\n");
+    }
 }
