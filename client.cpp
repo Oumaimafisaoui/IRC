@@ -111,9 +111,12 @@ void Client::nickCmd()
         this->server.sendMsg(this->getFd(), ":IRC 433 " + (this->getNick().empty() ? "*" : this->getNick()) + " " + this->commande_splited[1] +  " :Nickname is already in use\r\n");
         return ;
     }
-    this->setNick(this->commande_splited[1]);
-    this->nick_is_set = true;
-    auth[1] = true;
+    else
+    {
+        this->setNick(this->commande_splited[1]);
+        this->nick_is_set = true;
+        auth[1] = true;
+    }
    //removed sending message from server
 }
 void Client::userCmd()

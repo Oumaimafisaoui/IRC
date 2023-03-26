@@ -73,7 +73,8 @@ class Server
                 virtual const char *what() const throw();
         };
     
-
+        Client *find_client(const std::string &nick) const;
+        Channel *find_channel(const std::string &name) const;
         std::string get_pass() const;
         int get_port() const;
         int get_fd() const;
