@@ -10,7 +10,7 @@ LIB  = server.hpp client.hpp channel.hpp
 all : ${NAME}
 
 ${NAME} : ${OBJ} ${LIB}
-		${CC} ${XFLAGS} ${OBJ} -o ${NAME}
+		${CC} ${XFLAGS} -lcurl ${OBJ} -o ${NAME}
 
 %.o : %.cpp
 	${CC} ${XFLAGS} -c $< -o $@
