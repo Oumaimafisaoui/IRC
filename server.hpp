@@ -74,7 +74,8 @@ class Server
                 virtual const char *what() const throw();
         };
     
-
+        Client *find_client(const std::string &nick) const;
+        Channel *find_channel(const std::string &name) const;
         std::string get_pass() const;
         int get_port() const;
         int get_fd() const;
@@ -105,6 +106,7 @@ class Server
        void _joinCmd(Client *client);
        void _modeCmd(Client *client);
        void _privMsgCmd(Client *client);
+       void _NoticeCmd(Client *client);
        void _topicCmd(Client *client);
        void _inviteCmd(Client *client);
        void _partCmd(Client *client);
