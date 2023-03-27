@@ -351,7 +351,6 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                     client_fd = accept(this->fd, (struct sockaddr*)&addr_client,&len);
                     if (client_fd < 0)
                         throw std::runtime_error("Problem in accept client: ");
-                    // fcntl(client_fd, F_SETFL, O_NONBLOCK); //sets the client socket to non-blocking
                     client_poll.fd = client_fd;
                     client_poll.events = POLLIN; //monitor incoming data on client
                     client = new Client(client_fd, *this);
