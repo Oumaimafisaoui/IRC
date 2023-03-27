@@ -44,67 +44,6 @@ int Server::get_fd() const
     return (this->fd);
 }
 
-<<<<<<< HEAD
-=======
-size_t handle_response(char* data, size_t size, size_t nmemb, std::string* buffer) {
-    size_t content_start = 0, content_end = 0;
-
-    if (buffer != nullptr) {
-        std::string str(data, size * nmemb);
-        content_start = str.find("\"content\":\"") + 11;
-        content_end = str.find("\",\"author\":");
-
-        if (content_start != std::string::npos && content_end != std::string::npos) {
-            buffer->clear(); // clear the buffer first
-            buffer->append(str.substr(content_start, content_end - content_start));
-        }
-    }
-    return size * nmemb;
-}
-
-void Server::_botCmd(Client *client)
-{
-    (void)client;
-    // Initialize the global curl library
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    // Initialize the easy curl handle
-    CURL *curl = curl_easy_init();
-
-    // Check for errors
-    if (!curl) {
-        return ;
-    }
-
-    // Set the API URL
-    std::string api_url = "https://api.quotable.io/random";
-    curl_easy_setopt(curl, CURLOPT_URL, api_url.c_str());
-
-    // Set the callback function for handling the response
-    std::string buffer;
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, handle_response);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
-
-    // Execute the API call
-    CURLcode res = curl_easy_perform(curl);
-
-    // Check for errors
-    if (res != CURLE_OK) {
-        return ;
-    }
-
-    // Cleanup libcurl
-    curl_easy_cleanup(curl);
-    // Cleanup the global curl library
-    curl_global_cleanup();
-
-    // Parse the JSON response
-    size_t content_start = buffer.find("\"content\":\"") + 11;
-    size_t content_end = buffer.find("\",\"author\":");
-    std::string quote = buffer.substr(content_start, content_end - content_start);
-
-    sendMsg(client->getFd(), quote);
-}
->>>>>>> a3750cbfa676242cdb642372bce635ac95cd626f
 
 void Server::_botCmd(Client *client)
 {
