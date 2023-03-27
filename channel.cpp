@@ -183,6 +183,24 @@ void Channel::removeMember(Client *_client, std::string raison)
     sendToOne(_client->getFd(), "leave channel \"" + _name + "\"\n"); 
 }
 
+void Channel::kickClient(Client *_client, std::string nick, std::string comment) 
+{
+    std::string message = comment != "" ? comment : "";
+    if (!isMember(_client))
+    {
+        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :You're not on that channel\n");
+        return ;
+    }
+    if (!isOperator(_client))
+        return ;
+    Client *user = getMemberByNick(nick);
+    if (!user)
+    {
+        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :No such nick/channel\n" );
+        return ;
+    }
+    _clientList.erase(user);
+}
 
 void Channel::removeIt(Client *_client)
 {

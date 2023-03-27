@@ -43,6 +43,7 @@ class Channel {
         Client *getMemberByNick(std::string nick);
         bool checkModes(std::string _mode);
         void removeIt(Client *_client);
+        void kickClient(Client *_client, std::string nick, std::string comment);
 };
 
 #endif
