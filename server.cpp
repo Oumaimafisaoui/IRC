@@ -110,7 +110,7 @@ void Server::_botCmd(Client *client)
 Server::~Server(void)
 {
     std::cout << "Distructor for server is called" << std::endl;
-    delete this->client;
+    _freeAll();
 }
 
 Server::Server()
@@ -201,7 +201,7 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         {
             close(i->fd);
             clients.erase(i->fd);
-            
+            delete client;
             std::cout << "client went away!!" << std::endl;
             return ;
         }
@@ -360,7 +360,6 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                     client_fd = accept(this->fd, (struct sockaddr*)&addr_client,&len);
                     if (client_fd < 0)
                         throw std::runtime_error("Problem in accept client: ");
-                    fcntl(client_fd, F_SETFL, O_NONBLOCK); //sets the client socket to non-blocking
                     client_poll.fd = client_fd;
                     client_poll.events = POLLIN; //monitor incoming data on client
                     client = new Client(client_fd, *this);
@@ -502,6 +501,10 @@ void Server::_execute_commands(Client *client)
         _botCmd(client);
     if (client->commande_splited[0] == "PART" || client->commande_splited[0] == "part")
         _partCmd(client);
+    if (client->commande_splited[0] == "KICK" || client->commande_splited[0] == "kick")
+        _kickCmd(client);
+    if (client->commande_splited[0] == "QUIT" || client->commande_splited[0] == "quit")
+        _quitCmd(client);
 }
 
 
@@ -576,7 +579,7 @@ void Server::_privMsgCmd(Client *client)
                     std::cout << ":" << targets[i] << ":" << std::endl;
                     if (!tmp)
                     {
-                        sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel\r\n");
+                        sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel mm\r\n");
                         return ;
                     }
                     sendMsg(tmp->getFd(), ":" + client->getHost() + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
@@ -606,7 +609,7 @@ void Server::_privMsgCmd(Client *client)
                 Client *tmp = find_client(client->commande_splited[1]);
                 if (!tmp)
                 {
-                    sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel\r\n");
+                    sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel zz\r\n");
                     return ;
                 }
                 sendMsg(tmp->getFd(), ":" + client->getHost() + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
@@ -657,7 +660,7 @@ void Server::_privMsgCmd(Client *client)
                 std::cout << ":" << targets[i] << ":" << std::endl;
                 if (!tmp)
                 {
-                    sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel\r\n");
+                    sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel  aaaa\r\n");
                     return ;
                 }
                 sendMsg(tmp->getFd(), ":" + client->getHost() + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
@@ -950,4 +953,55 @@ void Server::_partCmd(Client *client)
         else
             channel->removeMember(client, raisons[i]);
     }
+}
+
+
+void Server::_kickCmd(Client *client)
+{
+    std::string comment = "";
+    size_t size = client->commande_splited.size();
+    if (size < 3)
+    {
+        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
+        return ;
+    }
+    Channel *channel = _findChannel(client->commande_splited[1]);
+    if (!channel)
+    {
+        sendMsg(client->getFd(), client->getNick() + " " +  client->commande_splited[1] +   " :No such channel\n");
+        return ;
+    }
+    std::vector<std::string> users = joinCmdParser(client->commande_splited[2]);
+    if (size > 3)
+    {
+        if (client->commande_splited[3][0] == ':')
+            for (size_t i = 3; i < size; i++)
+                comment += client->commande_splited[i] + " ";
+        else
+            comment = client->commande_splited[3];
+    }
+    for (size_t i = 0; i < users.size(); i++)
+        channel->kickClient(client, users[i], comment);
+}
+
+void Server::_quitCmd(Client *client)
+{
+    for (size_t i = 0; i < _channels.size(); i++)
+    {
+        if (_channels[i]->isMember(client))
+            _channels[i]->clearMember(client);
+    }
+    close(client->getFd());
+    clients.erase(client->getFd());
+    delete client;
+    std::cout << "client went away!!" << std::endl;
+}
+
+void Server::_freeAll()
+{
+    std::map<int, Client*>::iterator iter;
+    for (iter = clients.begin(); iter != clients.end(); iter++)
+        delete (*iter).second;
+    for (size_t i = 0; i < _channels.size(); i++)
+        delete _channels[i];
 }
