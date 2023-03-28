@@ -4,6 +4,8 @@
 #include <netinet/in.h>
 #include <utility>
 #include <string>
+#include <fstream>
+#include <sstream>
 #include <sys/socket.h>
 #include <sys/socket.h>
 #include <sys/un.h> 
@@ -20,8 +22,8 @@
 #include "client.hpp"
 #include <numeric>
 #include "channel.hpp"
-#include <sys/un.h>
-#include <curl/curl.h>
+// #include <sys/un.h>
+// #include <curl/curl.h>
 
 
 # define FAMILY AF_INET
@@ -93,6 +95,7 @@ class Server
         std::map<int, Client> getClients();
     private:
        int fd;
+       bool is_active;
         std::string password;
         int port;
        std::vector<pollfd> poll_vec;
@@ -112,6 +115,7 @@ class Server
        void _topicCmd(Client *client);
        void _inviteCmd(Client *client);
        void _botCmd(Client *client);     
+        void _botQuote(Client *client);
        void _partCmd(Client *client);
        void _kickCmd(Client *client);
        void _quitCmd(Client *client);

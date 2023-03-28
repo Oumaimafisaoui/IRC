@@ -44,66 +44,56 @@ int Server::get_fd() const
     return (this->fd);
 }
 
-size_t handle_response(char* data, size_t size, size_t nmemb, std::string* buffer) {
-    size_t content_start = 0, content_end = 0;
-
-    if (buffer != nullptr) {
-        std::string str(data, size * nmemb);
-        content_start = str.find("\"content\":\"") + 11;
-        content_end = str.find("\",\"author\":");
-
-        if (content_start != std::string::npos && content_end != std::string::npos) {
-            buffer->clear(); // clear the buffer first
-            buffer->append(str.substr(content_start, content_end - content_start));
-        }
-    }
-    return size * nmemb;
-}
 
 void Server::_botCmd(Client *client)
 {
-    (void)client;
-    // Initialize the global curl library
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    // Initialize the easy curl handle
-    CURL *curl = curl_easy_init();
-
-    // Check for errors
-    if (!curl) {
+    if(client->commande_splited.size() < 2)
+    {
+        sendMsg(client->getFd(), " BOT :Welcome to IRC Bot ! Please insert /bot Quote or /bot Joke or /bot Time and enjoy!\r\n");
         return ;
     }
-
-    // Set the API URL
-    std::string api_url = "https://api.quotable.io/random";
-    curl_easy_setopt(curl, CURLOPT_URL, api_url.c_str());
-
-    // Set the callback function for handling the response
-    std::string buffer;
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, handle_response);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
-
-    // Execute the API call
-    CURLcode res = curl_easy_perform(curl);
-
-    // Check for errors
-    if (res != CURLE_OK) {
+    if (client->commande_splited.size() > 3)
+    {
+        sendMsg(client->getFd(), " BOT :Too much arguments!\r\n");
         return ;
     }
+    else if (client->commande_splited[1] == "Quote")
+    {
+        std::ifstream file("quotes.txt");
+        std::string quote;
+        int line = rand() % 14;
+        for (int i = 0; i < line; i++)
+            std::getline(file, quote);
+        file.close();
+        sendMsg(client->getFd(), "Hello "+ client->getNick() + " ,Here is your Quote for today: " + quote + "\r\n");
+    }
+    else if (client->commande_splited[1] == "Joke")
+    {
+        std::ifstream file("jokes.txt");
+        std::string quote;
+        int line = rand() % 10;
+        for (int i = 0; i < line; i++)
+            std::getline(file, quote);
+        file.close();
+        sendMsg(client->getFd(), "Hello "+ client->getNick() + " ,Here is your Joke for today: " + quote + "\r\n");
+    }
+    else if (client->commande_splited[1] == "Time")
+    {
+        time_t now = time(0);
+        tm *ltm = localtime(&now);
+        std::ostringstream oss;
+        oss << ltm->tm_hour << ":" << ltm->tm_min << ":" << ltm->tm_sec;
+        std::string time = oss.str();
+        sendMsg(client->getFd(), "Hello "+ client->getNick() + " ,Here is the time: " + time + "\r\n");
 
-    // Cleanup libcurl
-    curl_easy_cleanup(curl);
-    // Cleanup the global curl library
-    curl_global_cleanup();
-
-    // Parse the JSON response
-    size_t content_start = buffer.find("\"content\":\"") + 11;
-    size_t content_end = buffer.find("\",\"author\":");
-    std::string quote = buffer.substr(content_start, content_end - content_start);
-
-    sendMsg(client->getFd(), quote);
+    }
+    else
+    {
+        sendMsg(client->getFd(), "461 " + client->getNick() + " BOT :Wrong command!\r\n");
+        return ;
+    }
+    
 }
-
-
 
 
 
@@ -115,6 +105,7 @@ Server::~Server(void)
 
 Server::Server()
 {
+    is_active = false;
     std::cout << "Constructor for server is called" << std::endl;
 
 }
@@ -377,7 +368,6 @@ Server::Server(int port, std::string password): password(password), port(port) ,
             }
             else 
             {
-                std::cout << "client sending message" << std::endl;
                 std::memset(&this->buffer, 0, sizeof(this->buffer));
                 int len = recv(current.fd, this->buffer, 500, 0);
                 // std::cout << "This is the this->buffer value: " << this->buffer << std::endl; 
@@ -533,6 +523,7 @@ void Server::_privMsgCmd(Client *client)
         return;
     }
     message = commands.substr(dots, commands.size() - dots); 
+    // if only 3 arguments
     if (client->commande_splited.size() == 3)
     {
         if (client->commande_splited[1].find(',') != std::string::npos)
@@ -570,7 +561,7 @@ void Server::_privMsgCmd(Client *client)
 
                     for (std::set<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
                     {
-                        sendMsg((*it)->getFd(), ":" + client->getHost() + " PRIVMSG " + tmp->getChannelName() + " " + message + "\r\n");
+                        sendMsg((*it)->getFd(), ":" + client->getHost() + " G " + tmp->getChannelName() + " " + message + "\r\n");
                     }
                 }
                 else
@@ -579,7 +570,7 @@ void Server::_privMsgCmd(Client *client)
                     std::cout << ":" << targets[i] << ":" << std::endl;
                     if (!tmp)
                     {
-                        sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel mm\r\n");
+                        sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel\r\n");
                         return ;
                     }
                     sendMsg(tmp->getFd(), ":" + client->getHost() + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
@@ -609,14 +600,14 @@ void Server::_privMsgCmd(Client *client)
                 Client *tmp = find_client(client->commande_splited[1]);
                 if (!tmp)
                 {
-                    sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel zz\r\n");
+                    sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel\r\n");
                     return ;
                 }
                 sendMsg(tmp->getFd(), ":" + client->getHost() + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
             }
         }
     }
-    else
+    else if (client->commande_splited.size() > 3)
     {
         while((end = commands.find(",", pos)) != std::string::npos)
         {
@@ -660,7 +651,7 @@ void Server::_privMsgCmd(Client *client)
                 std::cout << ":" << targets[i] << ":" << std::endl;
                 if (!tmp)
                 {
-                    sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel  aaaa\r\n");
+                    sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel\r\n");
                     return ;
                 }
                 sendMsg(tmp->getFd(), ":" + client->getHost() + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");

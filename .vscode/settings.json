@@ -68,6 +68,10 @@
         "concepts": "cpp",
         "numeric": "cpp",
         "set": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "deque": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "stack": "cpp"
     }
 }
