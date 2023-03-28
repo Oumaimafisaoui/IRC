@@ -28,7 +28,7 @@ class Channel {
         void addMember(Client *_client, std::string password);
         void removeMember(Client *_client, std::string raison);
         bool isMember(Client *_client);
-        void sendToMembers(std::string message, int fd);
+        void sendToMembers(std::string message);
         void sendToOne(int fd, std::string message);
 
         void setTopic(std::string _topic, Client *_client, int n);
@@ -44,6 +44,7 @@ class Channel {
         bool checkModes(std::string _mode);
         void removeIt(Client *_client);
         void kickClient(Client *_client, std::string nick, std::string comment);
+        void clearMember(Client *_client);
 };
 
 #endif

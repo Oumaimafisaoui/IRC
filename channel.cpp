@@ -41,9 +41,9 @@ void Channel::addMember(Client *_client, std::string password)
     else
     {
         _clientList.insert(_client);
-        sendToOne(_client->getFd(), _client->getNick() + " :just joined the Channel " + this->_name + "\n");
+        sendToMembers(_client->getNick() + " :just joined the Channel " + this->_name + "\n");
         if (_topic != "")
-            sendToOne(_client->getFd(), _client->getNick() + " " + this->_name + " :" + this->_topic + "\n");
+            sendToMembers(_client->getNick() + " " + this->_name + " topic:" + this->_topic + "\n");
     }
     std::cout << password << std::endl;
 }
@@ -53,16 +53,13 @@ bool Channel::isMember(Client *_client)
     return _clientList.find(_client) != _clientList.end();
 }
 
-void Channel::sendToMembers(std::string message, int fd)
+void Channel::sendToMembers(std::string message)
 {
     std::set<Client *>::iterator iterator;
     for (iterator = _clientList.begin(); iterator != _clientList.end(); iterator++)
     {
-        if ((*iterator)->getFd() != fd)
-        {
-            if (send((*iterator)->getFd(), message.c_str(), message.length(), 0) == -1)
-                perror ("send");
-        }
+        if (send((*iterator)->getFd(), message.c_str(), message.length(), 0) == -1)
+            perror ("send");
     }
 }
 
@@ -109,14 +106,14 @@ void Channel::setModes(std::string _mode, Client *client, std::string arg)
         else if (_mode == "+o")
         {
             if (!getMemberByNick(arg))
-                sendToOne(client->getFd(), client->getNick() + " " + _name +  " :No such nick/channel\n" );
+                sendToOne(client->getFd(), client->getNick() + " " + _name +  " :No such nick/channel bb\n" );
             else
                 _operators.insert(arg);
         }
         else if (_mode == "-o")
         {
             if (!getMemberByNick(arg))
-                sendToOne(client->getFd(), client->getNick() + " " + _name +  " :No such nick/channel\n");
+                sendToOne(client->getFd(), client->getNick() + " " + _name +  " :No such nick/channel zz \n");
             else
                 _operators.erase(arg);
         }
@@ -150,8 +147,7 @@ void Channel::setTopic(std::string newTopic, Client *_client, int n)
     else
     {
         _topic = newTopic;
-        sendToMembers(_client->getNick() + " " + _name +  " :" + _topic + "\n", _client->getFd());
-        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + _topic + "\n");
+        sendToMembers(_client->getNick() + " " + _name +  " :" + _topic + "\n");
     }
 }
 
@@ -168,7 +164,7 @@ void Channel::addInvited(std::string nick, Client *_client)
         return ;
     }
     invitedLists.insert(nick);
-    sendToOne(_client->getFd(), "Invite " + nick + " to " + _name +  "\n");
+    sendToMembers("Invite " + nick + " to " + _name +  "\n");
 }
 
 void Channel::removeMember(Client *_client, std::string raison)
@@ -178,14 +174,12 @@ void Channel::removeMember(Client *_client, std::string raison)
         sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :You're not on that channel\n");
         return ;
     }
-    _clientList.erase(_client);
-    sendToMembers(_client->getNick() + "  is leaving the channel " + _name +  " " + raison + "\n", _client->getFd());
-    sendToOne(_client->getFd(), "leave channel \"" + _name + "\"\n"); 
+    clearMember(_client);
+    sendToMembers(_client->getNick() + " left the channel " + _name +  " " + raison + "\n");
 }
 
 void Channel::kickClient(Client *_client, std::string nick, std::string comment) 
 {
-    std::string message = comment != "" ? comment : "";
     if (!isMember(_client))
     {
         sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :You're not on that channel\n");
@@ -196,10 +190,20 @@ void Channel::kickClient(Client *_client, std::string nick, std::string comment)
     Client *user = getMemberByNick(nick);
     if (!user)
     {
-        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :No such nick/channel\n" );
+        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :No such nick/channel pp\n" );
         return ;
     }
-    _clientList.erase(user);
+    clearMember(user);
+    if (comment == "")
+        comment = "The raison has not mentioned";
+    sendToMembers(_client->getNick() + " kick " + user->getNick() + " " + _name +  " " + comment + "\n");
+}
+
+void Channel::clearMember(Client *_client)
+{
+    _clientList.erase(_client);
+    if (this->_operators.find(_client->getNick()) != this->_operators.end())
+        _operators.find(_client->getNick());
 }
 
 void Channel::removeIt(Client *_client)
