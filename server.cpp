@@ -569,7 +569,7 @@ void Server::_privMsgCmd(Client *client)
                         sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel 1\r\n");
                         return ;
                     }
-                    sendMsg(tmp->getFd(), ":" + client->getHost() + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
+                    sendMsg(tmp->getFd(), ":" + tmp->getNick() +  "[!" + tmp->getUser() + "@" + tmp->getHost() + "]" + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
                 }
             }
         }
@@ -599,7 +599,7 @@ void Server::_privMsgCmd(Client *client)
                     sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel 2\r\n");
                     return ;
                 }
-                sendMsg(tmp->getFd(), ":" + client->getHost() + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
+                sendMsg(tmp->getFd(), ":" + tmp->getNick() +  "[!" + tmp->getUser() + "@" + tmp->getHost() + "]" + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
             }
         }
     }
