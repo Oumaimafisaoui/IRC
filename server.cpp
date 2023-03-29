@@ -888,15 +888,34 @@ void Server::_modeCmd(Client *client)
 void Server::_topicCmd(Client *client) 
 {
     int n;
-    std::string topic;
+    std::string topic = "";
     if (client->commande_splited.size() < 2)
     {
         sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
         return ;
     }
     n = client->commande_splited.size() == 2 ? 1 : 0;
-    topic = client->commande_splited.size() == 2 ? "" : client->commande_splited[2];
+    if (!n)
+    {
+        if (client->commande_splited[2][0] == ':')
+        {
+            for (size_t i = 2; i < client->commande_splited.size(); i++)
+            {
+                if (i == 2)
+                    topic += client->commande_splited[i].substr(1, client->commande_splited[i].length());
+                else
+                    topic += client->commande_splited[i];
+                if (i + 1 != client->commande_splited.size())
+                    topic += " ";
+            }
+        }
+        else
+            topic = client->commande_splited[2];
+    }
+    if (topic == " ")
+        topic = "";
     Channel *channel = _findChannel(client->commande_splited[1]);
+    std::cout << n << std::endl;
     if (!channel)
     {
         sendMsg(client->getFd(), client->getNick() + " " + client->commande_splited[1] +   " :No such channel\n");
