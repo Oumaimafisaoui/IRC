@@ -58,6 +58,13 @@ void Client::setCommand(std::vector<std::string> command)
 {
     this->commande_splited = command;
 }
+
+std::string Client::get_nick_adresse(Client *tmp)
+{
+    return (tmp->getNick() +  "!~" + tmp->getUser() + "@" + tmp->getHost());
+}
+
+
 void Client::passCmd()
 {
     if (auth[0] && auth[1] &&  auth[2] && !isRegistered)

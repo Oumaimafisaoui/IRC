@@ -557,6 +557,9 @@ void Server::_privMsgCmd(Client *client)
                         return ;
                     }
                     //send message to all the clients in the channel
+
+
+                    //TODO : CHANGE THISSSSSS
                     const std::set<Client*>& clients = tmp->getClients(); // create a reference to a copy of the set
 
                     for (std::set<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
@@ -573,7 +576,7 @@ void Server::_privMsgCmd(Client *client)
                         sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel\r\n");
                         return ;
                     }
-                    sendMsg(tmp->getFd(), ":" + tmp->getNick() +  "[!" + tmp->getUser() + "@" + tmp->getHost() + "]" + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
+                   sendMsg(tmp->getFd(), ":" + tmp->get_nick_adresse(tmp) + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
                 }
             }
         }
@@ -603,7 +606,7 @@ void Server::_privMsgCmd(Client *client)
                     sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel\r\n");
                     return ;
                 }
-                sendMsg(tmp->getFd(), ":" + tmp->getNick() +  "[!" + tmp->getUser() + "@" + tmp->getHost() + "]" + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
+                 sendMsg(tmp->getFd(), ":" + tmp->get_nick_adresse(tmp) + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
             }
         }
     }
@@ -654,7 +657,7 @@ void Server::_privMsgCmd(Client *client)
                     sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel\r\n");
                     return ;
                 }
-                sendMsg(tmp->getFd(), ":" + client->getHost() + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
+                sendMsg(tmp->getFd(), ":" + tmp->get_nick_adresse(tmp) + " PRIVMSG " + tmp->getNick() + " " + message + "\r\n");
             }
         }
         
@@ -728,7 +731,7 @@ void Server::_NoticeCmd(Client *client)
                     {
                         return ;
                     }
-                    sendMsg(tmp->getFd(), ":" + client->getHost() + " NOTICE " + tmp->getNick() + " " + message + "\r\n");
+                    sendMsg(tmp->getFd(), ":" + tmp->get_nick_adresse(tmp) + " NOTICE " + tmp->getNick() + " " + message + "\r\n");
                 }
             }
         }
@@ -756,7 +759,7 @@ void Server::_NoticeCmd(Client *client)
                 {
                     return ;
                 }
-                sendMsg(tmp->getFd(), ":" + client->getHost() + " NOTICE " + tmp->getNick() + " " + message + "\r\n");
+                sendMsg(tmp->getFd(), ":" + tmp->get_nick_adresse(tmp) + " NOTICE " + tmp->getNick() + " " + message + "\r\n");
             }
         }
     }
@@ -805,7 +808,7 @@ void Server::_NoticeCmd(Client *client)
                 {
                     return ;
                 }
-                sendMsg(tmp->getFd(), ":" + client->getHost() + " NOTICE " + tmp->getNick() + " " + message + "\r\n");
+                sendMsg(tmp->getFd(), ":" + tmp->get_nick_adresse(tmp) + + " NOTICE " + tmp->getNick() + " " + message + "\r\n");
             }
         }
         

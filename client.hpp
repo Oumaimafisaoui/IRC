@@ -48,6 +48,7 @@ class Client
         void passCmd();
         void userCmd();
         void nickCmd();
+        std::string get_nick_adresse(Client * tmp);
 }; 
 
 #endif
