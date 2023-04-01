@@ -817,7 +817,6 @@ void Server::_NoticeCmd(Client *client)
 
 void Server::_joinCmd(Client *client)
 {
-    std::cout << "Enter in Join Cmd" << std::endl;
     int size = client->commande_splited.size();
     std::vector<std::string> passwords;
     std::vector<std::string> channels;
@@ -845,28 +844,26 @@ void Server::_joinCmd(Client *client)
             else
                 channel->addMember(client, passwords[i]);
         }
-        std::cout << "index : " << i << " size " << i << std::endl;
     }
-    std::cout << "Out in Join parser Cmd" << std::endl;
 }
 
 void Server::_modeCmd(Client *client)
 {
     if (client->commande_splited.size() < 3)
     {
-        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
+        sendMsg(client->getFd(), ":IRC 461 " + client->getNick() + " MODE :No such nick/channel\r\n");
         return ;
     }
     Channel *channel = _findChannel(client->commande_splited[1]);
     std::string mode = client->commande_splited[2];
     if (client->commande_splited.size() < 4 && (mode == "+o" || mode == "+k" || mode == "-o"))
     {
-        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
+        sendMsg(client->getFd(), ":IRC 461 " + client->getNick() + " MODE :Not enough parameters\r\n");
         return ;
     }
     if (!channel)
     {
-        sendMsg(client->getFd(), client->getNick() + " " + client->commande_splited[1] +   " :No such channel\n");
+        sendMsg(client->getFd(), ":IRC 403 " + client->getNick() + " " + client->commande_splited[1] + " :No such channel\r\n");
         return ;
     }
     if (mode == "+i" || mode == "-i" || mode == "+t" || mode == "-t")
@@ -875,7 +872,7 @@ void Server::_modeCmd(Client *client)
     {
         Client *Newclient = findClientByNick(client->commande_splited[3]);
         if (!Newclient)
-            sendMsg(client->getFd(), client->getNick() + " " + client->commande_splited[3] +   " :No such user\n");
+            sendMsg(client->getFd(), ":IRC 401 " + client->commande_splited[1] + " " + client->getNick() + " :No such nick/channel\r\n");
         else
             channel->setModes(mode, client, client->commande_splited[3]);
     }
@@ -884,7 +881,7 @@ void Server::_modeCmd(Client *client)
     else if (mode == "-k")
         channel->setModes(mode, client, "");
     else 
-        sendMsg(client->getFd(), client->getNick() + " " + mode + " :is unknown mode char to me\n");
+        sendMsg(client->getFd(), ":IRC 472 " + client->getNick() + " " + mode.substr(1, 2) + " :is unknown mode char to me\r\n");
 }
 
 
@@ -894,7 +891,7 @@ void Server::_topicCmd(Client *client)
     std::string topic = "";
     if (client->commande_splited.size() < 2)
     {
-        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
+        sendMsg(client->getFd(), ":IRC 461 " + client->getNick() + " TOPIC :Not enough parameters\r\n");
         return ;
     }
     n = client->commande_splited.size() == 2 ? 1 : 0;
@@ -921,7 +918,7 @@ void Server::_topicCmd(Client *client)
     std::cout << n << std::endl;
     if (!channel)
     {
-        sendMsg(client->getFd(), client->getNick() + " " + client->commande_splited[1] +   " :No such channel\n");
+        sendMsg(client->getFd(), ":IRC 403 " + client->getNick() + " " + client->commande_splited[1] + " :No such channel\r\n");
         return ;
     }
     channel->setTopic(topic, client, n);
@@ -931,23 +928,29 @@ void Server::_inviteCmd(Client *client)
 {
     if (client->commande_splited.size() < 3)
     {
-        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
+        sendMsg(client->getFd(), ":IRC 461 " + client->getNick() + " INVITE :Not enough parameters\r\n");
+        return ;
+    }
+    Client *Newclient = findClientByNick(client->commande_splited[1]);
+    if (!Newclient)
+    {
+        sendMsg(client->getFd(), ":IRC 401 " + client->commande_splited[2] + " " + client->getNick() + " :No such nick/channel\r\n");
         return ;
     }
     Channel *channel = _findChannel(client->commande_splited[2]);
     if (!channel)
     {
-        sendMsg(client->getFd(), client->getNick() + " " + client->commande_splited[2] +   " :No such channel\n");
+        sendMsg(client->getFd(), ":IRC 403 " + client->getNick() + " " + client->commande_splited[2] + " :No such channel\r\n");
         return ;
     }
-    channel->addInvited(client->commande_splited[1], client);
+    channel->addInvited(client->commande_splited[1], client, Newclient);
 }
 
 void Server::_partCmd(Client *client)
 {
     if (client->commande_splited.size() < 2)
     {
-        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
+        sendMsg(client->getFd(), ":IRC 461 " + client->getNick() + " PART :Not enough parameters\r\n");
         return ;
     }
     std::vector<std::string> channels = joinCmdParser(client->commande_splited[1]);
@@ -960,7 +963,7 @@ void Server::_partCmd(Client *client)
         Channel *channel = _findChannel(channels[i]);
         if (!channel)
         {
-            sendMsg(client->getFd(), client->getNick() + " " + channels[i] +   " :No such channel\n");
+            sendMsg(client->getFd(), ":IRC 403 " + client->getNick() + " " + client->commande_splited[i] + " :No such channel\r\n");
             return ;
         }
         else
@@ -975,13 +978,13 @@ void Server::_kickCmd(Client *client)
     size_t size = client->commande_splited.size();
     if (size < 3)
     {
-        sendMsg(client->getFd(), client->getNick() + " "  + client->commande_splited[0] + " Not enough parameters\n");
+        sendMsg(client->getFd(), ":IRC 461 " + client->getNick() + " KICK :Not enough parameters\r\n");
         return ;
     }
     Channel *channel = _findChannel(client->commande_splited[1]);
     if (!channel)
     {
-        sendMsg(client->getFd(), client->getNick() + " " +  client->commande_splited[1] +   " :No such channel\n");
+        sendMsg(client->getFd(), ":IRC 403 " + client->getNick() + " " + client->commande_splited[1] + " :No such channel\r\n");
         return ;
     }
     std::vector<std::string> users = joinCmdParser(client->commande_splited[2]);

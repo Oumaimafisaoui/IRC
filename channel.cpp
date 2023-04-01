@@ -174,7 +174,7 @@ void Channel::setTopic(std::string newTopic, Client *_client, int n)
     }
 }
 
-void Channel::addInvited(std::string nick, Client *_client)
+void Channel::addInvited(std::string nick, Client *_client, Client *invited)
 {
     if (!isMember(_client))
     {
@@ -187,7 +187,8 @@ void Channel::addInvited(std::string nick, Client *_client)
         return ;
     }
     invitedLists.insert(nick);
-    sendToMembers("Invite " + nick + " to " + _name +  "\n");
+    sendToOne(invited->getFd(), "invited " + nick + " into channel " + _name);
+    sendToOne(invited->getFd(), "Invite " + nick + " to " + _name);
 }
 
 void Channel::removeMember(Client *_client, std::string raison)
