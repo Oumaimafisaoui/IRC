@@ -59,9 +59,10 @@ void Client::setCommand(std::vector<std::string> command)
     this->commande_splited = command;
 }
 
-std::string Client::get_nick_adresse(Client *tmp)
+std::string Client::get_nick_adresse(Client *temp)
 {
-    return (tmp->getNick() +  "!~" + tmp->getUser() + "@" + tmp->getHost());
+    (void)temp;
+    return (this->getNick() +  "!~" + this->getUser() + "@" + this->getHost());
 }
 
 

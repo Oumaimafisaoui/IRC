@@ -10,7 +10,7 @@ Channel::Channel(std::string name, Client *_client, std::string password)
     this->_inviteMode = false;
     this->_topicMode = false;
     this->_topic = "";
-    sendToOne(_client->getFd(), this->_name + " channel succesful created\n");
+    sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " " + "JOIN" + " :" + _name);
 }
 
 std::string Channel::getChannelName()
@@ -25,27 +25,25 @@ std::set<Client *> Channel::getClients()
 
 void Channel::addMember(Client *_client, std::string password)
 {
-    std::cout << this->_password << std::endl;
     if (this->_inviteMode)
     {
         if (invitedLists.find(_client->getNick()) == invitedLists.end())
         {
-            sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + "Cannot join channel (+i)\n" );
+            sendToOne(_client->getFd(), ":IRC 473 " + _client->getNick() + " " + _name +  " :" + "Cannot join channel (+i)" );
             return ;
         }
     }
     if (password != this->_password && this->_password != "")
-        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + "Cannot join channel (+k)\n" );
+        sendToOne(_client->getFd(), ":IRC 475 " +_client->getNick() + " " + _name +  " :" + "Cannot join channel (+k)" );
     else if (isMember(_client))
-        sendToOne(_client->getFd(), "You've already joined this channel\n");
+        sendToOne(_client->getFd(), ":IRC 443" +_client->getNick() + " " + _name +  " :" + "You've already joined this channel");
     else
     {
         _clientList.insert(_client);
-        sendToMembers(_client->getNick() + " :just joined the Channel " + this->_name + "\n");
+        sendToMembers(":" + _client->get_nick_adresse(NULL) + " JOIN" + " :" + _name);
         if (_topic != "")
-            sendToMembers(_client->getNick() + " " + this->_name + " topic:" + this->_topic + "\n");
+            sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " TOPIC" + " :" + _name);
     }
-    std::cout << password << std::endl;
 }
 
 bool Channel::isMember(Client *_client)
@@ -56,6 +54,7 @@ bool Channel::isMember(Client *_client)
 void Channel::sendToMembers(std::string message)
 {
     std::set<Client *>::iterator iterator;
+    message += "\r\n";
     for (iterator = _clientList.begin(); iterator != _clientList.end(); iterator++)
     {
         if (send((*iterator)->getFd(), message.c_str(), message.length(), 0) == -1)
@@ -65,6 +64,7 @@ void Channel::sendToMembers(std::string message)
 
 void Channel::sendToOne(int fd, std::string message)
 {
+    message += "\r\n";
     if (send(fd, message.c_str(), message.length(), 0) == -1)
         perror ("send");
 }
@@ -85,43 +85,66 @@ bool Channel::isOperator(Client *_client)
 {
     if (this->_operators.find(_client->getNick()) == this->_operators.end())
     {
-        sendToOne(_client->getFd(), _client->getNick() + " " + _name + " :You're not channel operator\n" );
+        sendToOne(_client->getFd(),":IRC 475 " +_client->getNick() + " " + _name +  " :" +  " :You're not channel operator" );
         return false;
     }
     return true;
 }
 
-void Channel::setModes(std::string _mode, Client *client, std::string arg)
+void Channel::setModes(std::string _mode, Client *_client, std::string arg)
 {
-    if (isOperator(client))
+    if (isOperator(_client))
     {
         if (_mode == "+t")
+        {
+            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " +t");
             this->_topicMode = true;
+        }
         else if (_mode == "+i")
+        {
+            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " +i");
             this->_inviteMode = true;
+        }
         else if (_mode == "-t")
+        {
+            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " -t");
             this->_topicMode = false;
+        }
         else if (_mode == "-i")
+        {
+            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " -t");
             this->_inviteMode = false;
+        }
         else if (_mode == "+o")
         {
             if (!getMemberByNick(arg))
-                sendToOne(client->getFd(), client->getNick() + " " + _name +  " :No such nick/channel bb\n" );
+                sendToOne(_client->getFd(),  ":IRC 441 " + _client->getNick() + " " + _name +  " :" + "They aren't on that channel" );
             else
+            {
+                sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " +o " + arg);
                 _operators.insert(arg);
+            }
         }
         else if (_mode == "-o")
         {
             if (!getMemberByNick(arg))
-                sendToOne(client->getFd(), client->getNick() + " " + _name +  " :No such nick/channel zz \n");
+                sendToOne(_client->getFd(),  ":IRC 441 " + _client->getNick() + " " + _name +  " :" + "They aren't on that channel" );
             else
+            {
+                sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " -o " + arg);
                 _operators.erase(arg);
+            }
         }
         else if (_mode == "+k")
+        {
+            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " +k " + arg);
             this->_password = arg;
+        }
         else if (_mode == "-k")
+        {
+            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " -k " + arg);
             this->_password = "";
-        std::cout << _password << std::endl;
+        }
     }
 }
 
@@ -129,7 +152,7 @@ void Channel::setTopic(std::string newTopic, Client *_client, int n)
 {
     if (!isMember(_client))
     {
-        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :You're not on that channel\n");
+        sendToOne(_client->getFd(), ":IRC 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
         return ;
     }
     if (_topicMode)
@@ -140,14 +163,14 @@ void Channel::setTopic(std::string newTopic, Client *_client, int n)
     if (n)
     {
         if (_topic == "")
-            sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :No topic is set\n");
+            sendToOne(_client->getFd(), ":IRC 331 " + _client->getNick() + " " + _name +  " :No topic is set");
         else
-            sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :" + _topic + "\n");
+            sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " " + "TOPIC "  + _name + " : " + _topic);
     }
     else
     {
         _topic = newTopic;
-        sendToMembers(_client->getNick() + " " + _name +  " :" + _topic + "\n");
+        sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "TOPIC "  + _name + " : " + _topic);
     }
 }
 
@@ -155,12 +178,12 @@ void Channel::addInvited(std::string nick, Client *_client)
 {
     if (!isMember(_client))
     {
-        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :You're not on that channel\n");
+        sendToOne(_client->getFd(), ":IRC 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
         return ;
     }
     if (getMemberByNick(nick))
     {
-        sendToOne(_client->getFd(), _client->getNick() +  " " + nick + " " + _name +  " :is already on channel\n" );
+        sendToOne(_client->getFd(), ":IRC 443 " + _client->getNick() +  " " + nick + " " + _name +  " :is already on channel\n" );
         return ;
     }
     invitedLists.insert(nick);
@@ -169,20 +192,21 @@ void Channel::addInvited(std::string nick, Client *_client)
 
 void Channel::removeMember(Client *_client, std::string raison)
 {
+    (void)raison;
     if (!isMember(_client))
     {
-        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :You're not on that channel\n");
+       sendToOne(_client->getFd(), ":IRC 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
         return ;
     }
     clearMember(_client);
-    sendToMembers(_client->getNick() + " left the channel " + _name +  " " + raison + "\n");
+    sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "PART" + " :" + _name);
 }
 
 void Channel::kickClient(Client *_client, std::string nick, std::string comment) 
 {
     if (!isMember(_client))
     {
-        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :You're not on that channel\n");
+        sendToOne(_client->getFd(), ":IRC 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
         return ;
     }
     if (!isOperator(_client))
@@ -196,7 +220,7 @@ void Channel::kickClient(Client *_client, std::string nick, std::string comment)
     clearMember(user);
     if (comment == "")
         comment = "The raison has not mentioned";
-    sendToMembers(_client->getNick() + " kick " + user->getNick() + " " + _name +  " " + comment + "\n");
+    sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "KICK " + _name  + " " + nick + " " + comment);
 }
 
 void Channel::clearMember(Client *_client)
