@@ -22,7 +22,7 @@ class Channel {
         Client *_owner;
         std::string _topic;
     public:
-        Channel(std::string name, Client *_client, std::string password);
+        Channel(std::string name, Client *_client);
         std::string getChannelName();
         std::set<Client *> getClients();
         void addMember(Client *_client, std::string password);

@@ -224,24 +224,24 @@ void Server::client_connected(Client *client)
 {
 
    std::vector<std::string> command_split;
-   std::string key;
-   size_t end_it = 0;
-   size_t pos_it = 0;
-
-    pos_it = 0;
-    while((end_it = client->buff_client.find(" ", pos_it)) != std::string::npos)
+   std::string  str = client->buff_client;
+   std::string temp = "";
+    for (size_t i = 0; i < str.length(); i++)
     {
-            key  = client->buff_client.substr(pos_it, end_it - pos_it);
-            command_split.push_back(key);
-            pos_it = end_it + 1;
+        if (str[i] == ' ')
+        {
+            if (temp[0] != '\n')
+                command_split.push_back(temp);
+            temp = "";
+            while (str[i] && str[i + 1] == ' ')
+                i++;
+        }
+        else
+            temp += str[i];
     }
-
-    if (pos_it < client->buff_client.length())
-    {
-            key = client->buff_client.substr(pos_it, client->buff_client.length() - pos_it);
-            command_split.push_back(key);
-    }
-    //display the output
+    if (temp[0] != '\0' && temp[0] != '\n')
+        command_split.push_back(temp);
+    
     std::string m = command_split[command_split.size() - 1];
     m = m.substr(0, m.size() - 1);
     command_split[command_split.size() - 1] = m;
@@ -261,9 +261,6 @@ void Server::client_not_connected(Client *client)
 
    std::vector<std::string> command_split;
    std::string key;
-   size_t end_it = 0;
-   size_t pos_it = 0;
-
    std::size_t k = 0;
  
    while((end = client->buff_client.find("\n", pos)) != std::string::npos)
@@ -281,20 +278,23 @@ void Server::client_not_connected(Client *client)
  
    while (k < message_split.size())
    {
-        pos_it = 0;
-        while((end_it = message_split[k].find(" ", pos_it)) != std::string::npos)
+        std::string  str = message_split[k];
+        std::string temp = "";
+        for (size_t i = 0; i < str.length(); i++)
         {
-                key  = message_split[k].substr(pos_it, end_it - pos_it);
-                command_split.push_back(key);
-                pos_it = end_it + 1;
+            if (str[i] == ' ')
+            {
+                if (temp[0] != '\n')
+                    command_split.push_back(temp);
+                temp = "";
+                while (str[i] && str[i + 1] == ' ')
+                    i++;
+            }
+            else
+                temp += str[i];
         }
-
-        if (pos_it < message_split[k].length())
-        {
-                key = message_split[k].substr(pos_it, message_split[k].length() - pos_it);
-                command_split.push_back(key);
-        }
-        //execute
+        if (temp[0] != '\0' && temp[0] != '\n')
+            command_split.push_back(temp);
         std::cerr << "{";
         for (unsigned int i = 0;i < command_split.size();++i)
             std::cerr << command_split[i] << " ";
@@ -838,7 +838,7 @@ void Server::_joinCmd(Client *client)
             Channel *channel = _findChannel(channels[i]);
             if (!channel)
             {
-                newChanel = new Channel(channels[i], client, passwords[i]);
+                newChanel = new Channel(channels[i], client);
                 _channels.push_back(newChanel);
             }
             else

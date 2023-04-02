@@ -1,12 +1,12 @@
 #include "channel.hpp"
 
-Channel::Channel(std::string name, Client *_client, std::string password)
+Channel::Channel(std::string name, Client *_client)
 {
     this->_name = name;
     this->_owner = _client;
     this->_operators.insert(_client->getNick());
     _clientList.insert(_client);
-    this->_password = password;
+    this->_password = "";
     this->_inviteMode = false;
     this->_topicMode = false;
     this->_topic = "";
