@@ -85,8 +85,11 @@ void Client::passCmd()
         this->server.sendMsg(this->getFd(), ":IRC 464 " + (this->getNick().empty() ? "*" : this->getNick()) +  " :Password incorrect\r\n");
         return ;
     }
-    this->pass_is_set = true;
-    auth[0] = true;
+    else
+    {
+        this->pass_is_set = true;
+        auth[0] = true;
+    }
 }
 
 bool Client::checkIsRegister() {
@@ -153,7 +156,7 @@ void Client::userCmd()
     }
     this->setUser(commande_splited[1]);
     auth[2] = true;
-    if (auth[0] && auth[1] && auth[2])
+    if (auth[0] && auth[1] && auth[2] && this->nick_is_set)
     {
         this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
         this->isRegistered = true;

@@ -181,6 +181,8 @@ void Channel::addInvited(std::string nick, Client *_client, Client *invited)
         sendToOne(_client->getFd(), ":IRC 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
         return ;
     }
+    if (!this->isOperator(_client))
+        return ;
     if (getMemberByNick(nick))
     {
         sendToOne(_client->getFd(), ":IRC 443 " + _client->getNick() +  " " + nick + " " + _name +  " :is already on channel\n" );
@@ -188,7 +190,8 @@ void Channel::addInvited(std::string nick, Client *_client, Client *invited)
     }
     invitedLists.insert(nick);
     sendToOne(invited->getFd(), "invited " + nick + " into channel " + _name);
-    sendToOne(invited->getFd(), "Invite " + nick + " to " + _name);
+    sendToOne(_client->getFd(), "Invite " + nick + " to " + _name);
+    std::cout << "Channel name " << _name << std::endl; 
 }
 
 void Channel::removeMember(Client *_client, std::string raison)

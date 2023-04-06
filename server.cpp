@@ -204,7 +204,7 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
             // std::cout << "This is the client->buff_client :" << client->buff_client;
             std::size_t pos = 0;
             while ((pos = client->buff_client.find("\r\n", pos)) != std::string::npos) 
-            {
+            { 
                 client->buff_client.replace(pos, 2, "\n");
                 // std::cout << "replacing" << std::endl;
             }
@@ -403,10 +403,21 @@ bool Server::_isNotChannelCmd(std::vector<std::string> command_splited)
 
 bool Server::findNick(std::string &nick)
 {
-    if (clients.empty())
+    bool ret = false;
+
+    for (std::map<int, Client*>::const_iterator it = this->clients.cbegin(); it != this->clients.cend(); ++it)
+    {
+        if (it->second->pass_is_set)
+        {
+            ret = true;
+            break ;
+        }
+    }
+    if (ret)
         return false;
     for (std::map<int, Client*>::const_iterator it = this->clients.cbegin(); it != this->clients.cend(); ++it)
     {
+        std::cout << it->second->getNick() << std::endl;
         if (it->second->getNick() == nick)
             return true;
     }
@@ -510,6 +521,7 @@ void Server::_privMsgCmd(Client *client)
     std::copy(client->commande_splited.begin(), client->commande_splited.end(), std::ostream_iterator<std::string>(oss, " "));
     std::string commands = oss.str();
 
+    std::cout << oss.str() << "------" << std::endl;
     size_t dots = commands.find_last_of(":");
     std::string message;
     std::vector<std::string> targets;
@@ -522,7 +534,14 @@ void Server::_privMsgCmd(Client *client)
         sendMsg(client->getFd(), ":" + client->getHost()+ "  412  " + (client->getNick().empty() ? "*" : client->getNick()) + " " + ":No text to send\r\n");
         return;
     }
-    message = commands.substr(dots, commands.size() - dots); 
+
+
+
+    message = commands.substr(dots, commands.size()); 
+
+
+
+    std::cout << "**********" << message << "*********" << std::endl;
     // if only 3 arguments
     if (client->commande_splited.size() == 3)
     {
@@ -569,6 +588,7 @@ void Server::_privMsgCmd(Client *client)
                 }
                 else
                 {
+                    std::cout << "**********" << message << "*********" << std::endl;
                     Client *tmp = find_client(targets[i]);
                     std::cout << ":" << targets[i] << ":" << std::endl;
                     if (!tmp)
