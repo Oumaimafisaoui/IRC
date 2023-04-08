@@ -154,13 +154,17 @@ void Client::userCmd()
         this->server.sendMsg(this->getFd(), ":IRC 462 " + this->commande_splited[0] +  " :You may not reregister\r\n");
         return ;
     }
-    this->setUser(commande_splited[1]);
-    auth[2] = true;
-    if (auth[0] && auth[1] && auth[2] && this->nick_is_set)
+    else
     {
-        this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
-        this->isRegistered = true;
+        this->setUser(commande_splited[1]);
+        auth[2] = true;
+        if (auth[0] && auth[1] && auth[2] && this->nick_is_set)
+        {
+            this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
+            this->isRegistered = true;
+        }
     }
+    return ;
 }
 
 void Client::execute()
