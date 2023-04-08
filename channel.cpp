@@ -42,7 +42,7 @@ void Channel::addMember(Client *_client, std::string password)
         _clientList.insert(_client);
         sendToMembers(":" + _client->get_nick_adresse(NULL) + " JOIN" + " :" + _name);
         if (_topic != "")
-            sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " TOPIC" + " :" + _name);
+            sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " TOPIC" + " :" + _topic);
     }
 }
 
@@ -163,14 +163,14 @@ void Channel::setTopic(std::string newTopic, Client *_client, int n)
     if (n)
     {
         if (_topic == "")
-            sendToOne(_client->getFd(), ":IRC 331 " + _client->getNick() + " " + _name +  " :No topic is set");
+            sendToOne(_client->getFd(), ":IRC 331 " + _client->getNick() + " " + _name +  " :No topic is set.");
         else
-            sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " " + "TOPIC "  + _name + " : " + _topic);
+            sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " " + "TOPIC "  + _name + " " + _topic);
     }
     else
     {
         _topic = newTopic;
-        sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "TOPIC "  + _name + " : " + _topic);
+        sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "TOPIC "  + _name + " " + _topic);
     }
 }
 
@@ -189,8 +189,9 @@ void Channel::addInvited(std::string nick, Client *_client, Client *invited)
         return ;
     }
     invitedLists.insert(nick);
-    sendToOne(invited->getFd(), "invited " + nick + " into channel " + _name);
-    sendToOne(_client->getFd(), "Invite " + nick + " to " + _name);
+    sendToOne(_client->getFd(), ":IRC 341 " + _client->getNick() + " " + nick + " " + _name);
+    sendToOne(_client->getFd(), "invited " + nick + " into channel " + _name);
+    sendToOne(invited->getFd(), invited->get_nick_adresse(NULL) + " INVITE " + nick + " :" + _name);
     std::cout << "Channel name " << _name << std::endl; 
 }
 
@@ -202,8 +203,8 @@ void Channel::removeMember(Client *_client, std::string raison)
        sendToOne(_client->getFd(), ":IRC 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
         return ;
     }
+    sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "PART " + _name + " " + raison);
     clearMember(_client);
-    sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "PART" + " :" + _name);
 }
 
 void Channel::kickClient(Client *_client, std::string nick, std::string comment) 

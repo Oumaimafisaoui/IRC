@@ -817,20 +817,16 @@ void Server::_partCmd(Client *client)
         return ;
     }
     std::vector<std::string> channels = joinCmdParser(client->commande_splited[1]);
-    std::vector<std::string> raisons;
+    std::string raison("");
     if (client->commande_splited.size() > 2)
-        raisons = joinCmdParser(client->commande_splited[2]);
-    raisons.resize(channels.size(), "");
+        raison = ":" + client->commande_splited[2];
     for (size_t i = 0; i < channels.size(); i++)
     {
         Channel *channel = _findChannel(channels[i]);
         if (!channel)
-        {
-            sendMsg(client->getFd(), ":IRC 403 " + client->getNick() + " " + client->commande_splited[i] + " :No such channel\r\n");
-            return ;
-        }
+            sendMsg(client->getFd(), ":IRC 403 " + client->getNick() + " " + channels[i] + " :No such channel\r\n");
         else
-            channel->removeMember(client, raisons[i]);
+            channel->removeMember(client, raison);
     }
 }
 
