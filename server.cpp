@@ -228,12 +228,12 @@ void Server::client_connected(Client *client)
    std::string temp = "";
     for (size_t i = 0; i < str.length(); i++)
     {
-        if (str[i] == ' ' || str[i] == '\n') 
+        if (str[i] == ' ')
         {
-            if (!temp.empty()) 
+            if (temp[0] != '\n')
                 command_split.push_back(temp);
             temp = "";
-            while (str[i] == ' ' || str[i] == '\n')
+            while (str[i] && str[i + 1] == ' ')
                 i++;
         }
         else
@@ -241,6 +241,11 @@ void Server::client_connected(Client *client)
     }
     if (temp[0] != '\0' && temp[0] != '\n')
         command_split.push_back(temp);
+    std::string m = command_split[command_split.size() - 1];
+    if (m[m.size() - 1] == '\n')
+        m = m.substr(0, m.size() - 1);
+    command_split[command_split.size() - 1] = m;
+    command_split = ft_parser(command_split);
     client->setCommand(command_split);
     _execute_commands(client);
     client->commande_splited.clear();
@@ -309,6 +314,33 @@ void Server::client_not_connected(Client *client)
 
 }
 
+std::vector<std::string> Server::ft_parser(std::vector<std::string> params)
+{
+    std::vector<std::string> ret;
+    size_t n = 0;
+    std::string rest = "";
+    if (params[0][0] == ':')
+        n = 1;
+    for (size_t i = n; i < params.size(); i++)
+    {
+        ret.push_back(params[i]);
+        if (ret.size() == 15)
+        {
+            i++;
+            while (i < params.size())
+            {
+                rest += params[i];
+                if (i != params.size() + 1)
+                    rest += " ";
+                i++;
+            }
+            if (rest != "")
+                ret.push_back(rest);
+            break ;
+        }
+    }
+    return ret;
+}
 
 Server::Server(int port, std::string password): password(password), port(port) , off(FALSE)
 {
@@ -461,7 +493,6 @@ Client *Server::findClientByNick(std::string nick)
 std::vector<std::string> Server::joinCmdParser(std::string params)
 {
     std::vector<std::string> ret;
-    std::cout << "Enter in Join parser Cmd" << std::endl;
     std::string temp = "";
     for (size_t i = 0; i < params.length(); i++)
     {
@@ -475,7 +506,6 @@ std::vector<std::string> Server::joinCmdParser(std::string params)
     }
     ret.push_back(temp);
     return ret;
-    std::cout << "out in Join parser Cmd" << std::endl;
 }
 
 
@@ -621,7 +651,7 @@ void Server::_privMsgCmd(Client *client, bool error)
     std::string flag_com;  
 
     error == true ? (flag_com = "PRIVMSG") : flag_com = "NOTICE";
-    
+    std::cout << client->commande_splited[0] << "HELLO PRIV" <<  std::endl;
     if (client->commande_splited.size() < 2)
     {
         sendMsg(client->getFd(), ":" + client->getHost()+ " 411 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No recipient given " + flag_com + " " + "\r\n");
