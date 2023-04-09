@@ -110,8 +110,7 @@ class Server
        void _execute_commands(Client *clien);
        void _joinCmd(Client *client);
        void _modeCmd(Client *client);
-       void _privMsgCmd(Client *client);
-       void _NoticeCmd(Client *client);
+       void _privMsgCmd(Client *client, bool error);
        void _topicCmd(Client *client);
        void _inviteCmd(Client *client);
        void _botCmd(Client *client);     
@@ -120,6 +119,10 @@ class Server
        void _kickCmd(Client *client);
        void _quitCmd(Client *client);
        void _freeAll();
+       std::string getmessage(Client *client, std::string &commands, size_t dots);
+        void sendmessage(std::string &message, Client* client, std::string &commands, size_t dots, bool error);
+       void find_client_and_sendmsg1(Client *client, std::string &target, std::string &message, bool error);
+       void find_channel_and_sendmsg1(Client *client, std::string &target, std::string &message, bool error);
 };
 
 
