@@ -871,7 +871,7 @@ void Server::_modeCmd(Client *client)
 {
     if (client->commande_splited.size() < 3)
     {
-        sendMsg(client->getFd(), ":IRC 461 " + client->getNick() + " MODE :No such nick/channel\r\n");
+         sendMsg(client->getFd(), ":IRC 461 " + client->getNick() + " MODE :Not enough parameters\r\n");
         return ;
     }
     Channel *channel = _findChannel(client->commande_splited[1]);
@@ -992,7 +992,7 @@ void Server::_kickCmd(Client *client)
 {
     std::string comment = "";
     size_t size = client->commande_splited.size();
-    if (size < 3)
+    if (size < 3 || client->commande_splited[2] == ":")
     {
         sendMsg(client->getFd(), ":IRC 461 " + client->getNick() + " KICK :Not enough parameters\r\n");
         return ;

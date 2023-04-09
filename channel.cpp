@@ -112,7 +112,7 @@ void Channel::setModes(std::string _mode, Client *_client, std::string arg)
         }
         else if (_mode == "-i")
         {
-            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " -t");
+            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " -i");
             this->_inviteMode = false;
         }
         else if (_mode == "+o")
@@ -191,7 +191,7 @@ void Channel::addInvited(std::string nick, Client *_client, Client *invited)
     invitedLists.insert(nick);
     sendToOne(_client->getFd(), ":IRC 341 " + _client->getNick() + " " + nick + " " + _name);
     sendToOne(_client->getFd(), "invited " + nick + " into channel " + _name);
-    sendToOne(invited->getFd(), invited->get_nick_adresse(NULL) + " INVITE " + nick + " :" + _name);
+    sendToOne(invited->getFd(), ":" + _client->get_nick_adresse(NULL) + " INVITE " + nick + " :" + _name);
     std::cout << "Channel name " << _name << std::endl; 
 }
 
@@ -219,20 +219,22 @@ void Channel::kickClient(Client *_client, std::string nick, std::string comment)
     Client *user = getMemberByNick(nick);
     if (!user)
     {
-        sendToOne(_client->getFd(), _client->getNick() + " " + _name +  " :No such nick/channel pp\n" );
+        sendToOne(_client->getFd(), ":IRC 401 " + _client->getNick() +  " " + nick + " :No such nick/channel\r\n");
         return ;
     }
-    clearMember(user);
     if (comment == "")
         comment = "The raison has not mentioned";
-    sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "KICK " + _name  + " " + nick + " " + comment);
+    sendToMembers(":" + _client->get_nick_adresse(NULL) + " KICK " + _name  + " " + nick + " " + comment);
+    clearMember(user);
 }
 
 void Channel::clearMember(Client *_client)
 {
     _clientList.erase(_client);
     if (this->_operators.find(_client->getNick()) != this->_operators.end())
-        _operators.find(_client->getNick());
+        _operators.erase(_client->getNick());
+    if (this->invitedLists.find(_client->getNick()) != this->invitedLists.end())
+        invitedLists.erase(_client->getNick());
 }
 
 void Channel::removeIt(Client *_client)
