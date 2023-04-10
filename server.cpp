@@ -902,6 +902,27 @@ void Server::_quitCmd(Client *client)
     std::cout << "client went away!!" << std::endl;
 }
 
+void Server::_operCmd(Client *client)
+{
+    std::string password("miros");
+    if (client->command_splited.size() < 3)
+    {
+        sendMsg(client->getFd(), ":IRC 461 " + client->getNick() + " KICK :Not enough parameters\r\n");
+        return ;
+    }
+    if (client->command_splited[2] != password)
+    {
+        sendMsg(client->getFd(), ":IRC 464 " + client->getNick() + " :Password incorrect\r\n");
+        return ;
+    }
+    if (client->command_splited[1] == client->getNick())
+    {
+        sendMsg(client->getFd(), ":IRC 491 " + client->getNick() + " :No O-lines for your host\r\n");
+        return ;
+    }
+    
+}
+
 void Server::_freeAll()
 {
     std::map<int, Client*>::iterator iter;

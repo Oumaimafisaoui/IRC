@@ -120,6 +120,7 @@ class Server
        void _kickCmd(Client *client);
        void _quitCmd(Client *client);
        void _freeAll();
+       void _operCmd(Client *client);
        std::string getmessage(Client *client, std::string &commands, size_t dots);
         void sendmessage(std::string &message, Client* client, std::string &commands, size_t dots, bool error);
        void find_client_and_sendmsg1(Client *client, std::string &target, std::string &message, bool error);
