@@ -119,6 +119,7 @@ class Server
        void _partCmd(Client *client);
        void _kickCmd(Client *client);
        void _quitCmd(Client *client);
+       void _wallopsCmd(Client *client);
        void _freeAll();
        std::string getmessage(Client *client, std::string &commands, size_t dots);
         void sendmessage(std::string &message, Client* client, std::string &commands, size_t dots, bool error);

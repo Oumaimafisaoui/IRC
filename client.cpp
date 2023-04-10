@@ -5,6 +5,7 @@
 Client::Client(int fd, Server &server) : server(server)
 {
     char hostn[128]; 
+    is_operator = false;
     if (gethostname(hostn, 128) == -1)
     {
         perror("gethostname");
@@ -17,6 +18,11 @@ Client::Client(int fd, Server &server) : server(server)
     hostName = std::string(hostn);
     buff_client = "";
     memset(auth, false, sizeof(bool) * 3);
+}
+
+bool Client::get_isoperator() const
+{
+    return (this->is_operator);
 }
 Client::~Client()
 {
@@ -102,7 +108,7 @@ void Client::nickCmd()
         isRegistered = true;
     if (this->commande_splited.size() < 2)
     {
-        this->server.sendMsg(this->getFd(), ":IRC 461 " + (this->getNick().empty() ? "*" : this->getNick()) + " " + this->commande_splited[0] +  " :Not enough parameters\r\n");
+        this->server.sendMsg(this->getFd(), ":IRC 431 " + (this->getNick().empty() ? "*" : this->getNick()) + " " + this->commande_splited[0] +  " :No nickname given\r\n");
         return ;
     }
     if (!this->pass_is_set)
@@ -112,7 +118,7 @@ void Client::nickCmd()
     }
     if (this->commande_splited[1].find_first_of(" ,*?!@.") != std::string::npos ||
     this->commande_splited[1][0] == '$' || this->commande_splited[1][0] == ':' || 
-    this->commande_splited[1][0] == '#')
+    this->commande_splited[1][0] == '#' || this->commande_splited[1].size() > 9)
     {
         this->server.sendMsg(this->getFd(), ":IRC 432 " + (this->getNick().empty() ? "*" : this->getNick()) + " " + this->commande_splited[1] +  " :Erroneus nickname\r\n");
         return ;
@@ -162,7 +168,8 @@ void Client::userCmd()
         {
             this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
             this->isRegistered = true;
-        } else {
+        } else 
+        {
             // quit client from server ( rm form pfds & clients & close fd & send 404 )
             // QUIT
         }
