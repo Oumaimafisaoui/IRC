@@ -512,8 +512,6 @@ std::vector<std::string> Server::joinCmdParser(std::string params)
 
 void Server::_execute_commands(Client *client) 
 {
-    std::cout << "enter" << std::endl;
-    std::cout << ":" << client->commande_splited[0] << ":"<< std::endl;
     if (client->commande_splited[0] == "JOIN" || client->commande_splited[0] == "join")
         _joinCmd(client);
     if (client->commande_splited[0] == "MODE" || client->commande_splited[0] == "mode")
@@ -536,6 +534,10 @@ void Server::_execute_commands(Client *client)
         _quitCmd(client);
     if(client->commande_splited[0] == "WALLOPS" || client->commande_splited[0] == "wallops")
         _wallopsCmd(client);
+    if(client->commande_splited[0] == "OPER" || client->commande_splited[0] == "oper")
+        _operCmd(client);
+    else
+        sendMsg(client->getFd(), ":IRC 421 " + client->getNick() + " " + client->commande_splited[0]  + " :Unknown command\r\n");
 }
 
 
@@ -930,22 +932,23 @@ void Server::_quitCmd(Client *client)
 void Server::_operCmd(Client *client)
 {
     std::string password("miros");
-    if (client->command_splited.size() < 3)
+    if (client->commande_splited.size() < 3)
     {
         sendMsg(client->getFd(), ":IRC 461 " + client->getNick() + " KICK :Not enough parameters\r\n");
         return ;
     }
-    if (client->command_splited[2] != password)
+    if (client->commande_splited[2] != password)
     {
         sendMsg(client->getFd(), ":IRC 464 " + client->getNick() + " :Password incorrect\r\n");
         return ;
     }
-    if (client->command_splited[1] == client->getNick())
+    if (client->commande_splited[1] == client->getNick())
     {
         sendMsg(client->getFd(), ":IRC 491 " + client->getNick() + " :No O-lines for your host\r\n");
         return ;
     }
-    
+    client->setOperatorStatus(true);
+    sendMsg(client->getFd(), ":IRC 381 " + client->getNick() + " :You are now an IRC operator\r\n");
 }
 
 void Server::_freeAll()

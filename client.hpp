@@ -39,6 +39,7 @@ class Client
         std::string getUser() const;
         std::string getHost() const;
         bool get_isoperator() const;
+        void setOperatorStatus(bool oper);
         int getFd() const;
         bool checkIsRegister();
         void setFd(int fd);

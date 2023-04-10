@@ -20,6 +20,11 @@ Client::Client(int fd, Server &server) : server(server)
     memset(auth, false, sizeof(bool) * 3);
 }
 
+void Client::setOperatorStatus(bool oper)
+{
+    this->is_operator = oper;
+}
+
 bool Client::get_isoperator() const
 {
     return (this->is_operator);
