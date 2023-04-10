@@ -29,6 +29,7 @@ class Client
         bool        nick_is_set;
         bool        auth[3];
         friend class Server;
+        bool is_operator;
         Server &server;
     public:
         std::vector<std::string> commande_splited;
@@ -37,6 +38,7 @@ class Client
         std::string getNick() const;
         std::string getUser() const;
         std::string getHost() const;
+        bool get_isoperator() const;
         int getFd() const;
         bool checkIsRegister();
         void setFd(int fd);

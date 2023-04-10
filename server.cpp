@@ -432,18 +432,19 @@ bool Server::_isNotChannelCmd(std::vector<std::string> command_splited)
 
 bool Server::findNick(std::string &nick)
 {
-    bool ret = false;
+    //TODO: enlver cette boucel
+    // bool ret = false;
 
-    for (std::map<int, Client*>::const_iterator it = this->clients.cbegin(); it != this->clients.cend(); ++it)
-    {
-        if (it->second->pass_is_set)
-        {
-            ret = true;
-            break ;
-        }
-    }
-    if (ret)
-        return false;
+    // for (std::map<int, Client*>::const_iterator it = this->clients.cbegin(); it != this->clients.cend(); ++it)
+    // {
+    //     if (it->second->pass_is_set)
+    //     {
+    //         ret = true;
+    //         break ;
+    //     }
+    // }
+    // if (ret)
+    //     return false;
     for (std::map<int, Client*>::const_iterator it = this->clients.cbegin(); it != this->clients.cend(); ++it)
     {
         std::cout << it->second->getNick() << std::endl;
@@ -533,21 +534,45 @@ void Server::_execute_commands(Client *client)
         _kickCmd(client);
     if (client->commande_splited[0] == "QUIT" || client->commande_splited[0] == "quit")
         _quitCmd(client);
+    if(client->commande_splited[0] == "WALLOPS" || client->commande_splited[0] == "wallops")
+        _wallopsCmd(client);
+}
+
+
+void Server::_wallopsCmd(Client *client)
+{
+    //send a message to all users who are not operators
+    if(client->commande_splited.size() < 2)
+    {
+        std::string errorMessage = ":" + client->getHost() + "  412  " + (client->getNick().empty() ? "*" : client->getNick()) + " " + ":No text to send\r\n";
+        sendMsg(client->getFd(), errorMessage);
+        return;
+    }
+
+    std::string message =  ":" + client->get_nick_adresse(client) + " WALLOPS :" + client->commande_splited[1] + "\r\n";
+    for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
+    {
+        if (it->second->get_isoperator() == false)
+            sendMsg(it->second->getFd(), message);
+    }
 }
 
 
 std::string Server::getmessage(Client *client, std::string &commands, size_t dots)
 {
     std::string message;
-    
+    std::cout << message << std::endl;
     if (dots == std::string::npos)
     {
         std::string errorMessage = ":" + client->getHost() + "  412  " + (client->getNick().empty() ? "*" : client->getNick()) + " " + ":No text to send\r\n";
         sendMsg(client->getFd(), errorMessage);
         return errorMessage;
     }
-    message = commands.substr(dots, commands.size()); 
-    return (message);
+    else
+    {
+        message = commands.substr(dots, commands.size()); 
+        return (message);
+    }
 }
 
 
