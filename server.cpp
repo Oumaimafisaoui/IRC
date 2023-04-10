@@ -222,7 +222,6 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
 
 void Server::client_connected(Client *client)
 {
-
    std::vector<std::string> command_split;
    std::string  str = client->buff_client;
    std::string temp = "";
@@ -944,11 +943,10 @@ void Server::_operCmd(Client *client)
     }
     if (client->commande_splited[1] == client->getNick())
     {
-        sendMsg(client->getFd(), ":IRC 491 " + client->getNick() + " :No O-lines for your host\r\n");
-        return ;
+        client->setOperatorStatus(true);
+        sendMsg(client->getFd(), ":IRC 381 " + client->getNick() + " :You are now an IRC operator\r\n");
+        sendMsg(client->getFd(), ":" + client->get_nick_adresse(NULL) + " " + "MODE +O");
     }
-    client->setOperatorStatus(true);
-    sendMsg(client->getFd(), ":IRC 381 " + client->getNick() + " :You are now an IRC operator\r\n");
 }
 
 void Server::_freeAll()
