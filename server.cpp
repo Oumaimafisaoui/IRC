@@ -509,15 +509,18 @@ void Server::_execute_commands(Client *client)
 std::string Server::getmessage(Client *client, std::string &commands, size_t dots)
 {
     std::string message;
-    
+    std::cout << message << std::endl;
     if (dots == std::string::npos)
     {
         std::string errorMessage = ":" + client->getHost() + "  412  " + (client->getNick().empty() ? "*" : client->getNick()) + " " + ":No text to send\r\n";
         sendMsg(client->getFd(), errorMessage);
         return errorMessage;
     }
-    message = commands.substr(dots, commands.size()); 
-    return (message);
+    else
+    {
+        message = commands.substr(dots, commands.size()); 
+        return (message);
+    }
 }
 
 
