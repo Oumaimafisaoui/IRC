@@ -93,6 +93,7 @@ class Server
         Client *findClientByNick(std::string name);
         std::vector<std::string> joinCmdParser(std::string params);
         std::map<int, Client> getClients();
+        std::vector<std::string> ft_parser(std::vector<std::string>);
     private:
        int fd;
        bool is_active;

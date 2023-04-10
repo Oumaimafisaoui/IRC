@@ -162,6 +162,9 @@ void Client::userCmd()
         {
             this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
             this->isRegistered = true;
+        } else {
+            // quit client from server ( rm form pfds & clients & close fd & send 404 )
+            // QUIT
         }
     }
     return ;
