@@ -545,7 +545,6 @@ void Server::_execute_commands(Client *client)
 
 void Server::_wallopsCmd(Client *client)
 {
-    //send a message to all users who are not operators
     if(client->commande_splited.size() < 2)
     {
         std::string errorMessage = ":" + client->getHost() + "  412  " + (client->getNick().empty() ? "*" : client->getNick()) + " " + ":No text to send\r\n";
@@ -554,8 +553,7 @@ void Server::_wallopsCmd(Client *client)
     }
     for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
     {
-        if (
-            it->second->get_isoperator() == false)
+        if (it->second->get_isoperator() == false)
             sendMsg(it->second->getFd(), message);
     }
     return ;
@@ -661,11 +659,9 @@ void Server::sendmessage(std::string &message, Client* client, bool error)
 
 void Server::_privMsgCmd(Client *client, bool error)
 {
-    std::cout << "COMMANDS " << client->commande_splited.size() << std::endl;
     std::string flag_com;  
 
     error == true ? (flag_com = "PRIVMSG") : flag_com = "NOTICE";
-    std::cout << client->commande_splited[0] << "HELLO PRIV" <<  std::endl;
 
     if (client->commande_splited.size() < 2)
     {
