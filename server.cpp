@@ -552,33 +552,32 @@ void Server::_wallopsCmd(Client *client)
         sendMsg(client->getFd(), errorMessage);
         return;
     }
-
     std::string message =  ":" + client->get_nick_adresse(client) + " WALLOPS :" + client->commande_splited[1] + "\r\n";
     for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
     {
         if (it->second->get_isoperator() == false)
             sendMsg(it->second->getFd(), message);
     }
+    return ;
 }
 
 
-std::string Server::getmessage(Client *client, std::string &commands, size_t dots)
+std::string Server::get_message(Client *client)
 {
-    std::string message;
-    std::cout << message << std::endl;
-    if (dots == std::string::npos)
+    std::vector<std::string> message_vec;
+    for(size_t i = 2; i < client->commande_splited.size(); i++)
     {
-        std::string errorMessage = ":" + client->getHost() + "  412  " + (client->getNick().empty() ? "*" : client->getNick()) + " " + ":No text to send\r\n";
-        sendMsg(client->getFd(), errorMessage);
-        return errorMessage;
+        message_vec.push_back(client->commande_splited[i]);
     }
-    else
+    std::string message = "";
+    for(size_t i = 0; i < message_vec.size(); i++)
     {
-        message = commands.substr(dots, commands.size()); 
-        return (message);
+        message += message_vec[i];
+        if (i != message_vec.size() - 1)
+            message += " ";
     }
+    return (message);
 }
-
 
 void Server::find_channel_and_sendmsg1(Client *client, std::string &target, std::string &message, bool error)
 {
@@ -596,6 +595,7 @@ void Server::find_channel_and_sendmsg1(Client *client, std::string &target, std:
         const std::set<Client*>& clients = tmp->getClients(); 
         for (std::set<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
         {
+            //if the client is not the operator : how?
             sendMsg((*it)->getFd(), ":" + client->getHost() + " G " + tmp->getChannelName() + " " + message + "\r\n");
         }
     }
@@ -612,7 +612,7 @@ void Server::find_client_and_sendmsg1(Client *client, std::string &target, std::
 
     if (tmp != NULL)
     {
-        sendMsg(tmp->getFd(), ":" + tmp->get_nick_adresse(tmp) + " " + flag_com + " " + tmp->getNick() + " " + message + "\r\n");
+        sendMsg(tmp->getFd(), ":" + tmp->get_nick_adresse(tmp) + " " + flag_com + " " + tmp->getNick() + " :" + message + "\r\n");
         return ;
        
     }
@@ -626,37 +626,20 @@ void Server::find_client_and_sendmsg1(Client *client, std::string &target, std::
     return ;
 }
 
-void Server::sendmessage(std::string &message, Client* client, std::string &commands, size_t dots, bool error)
+void Server::sendmessage(std::string &message, Client* client, bool error)
 {
     std::vector<std::string> targets;
-    std::string command;
-    std::string flag_com;
-
-    size_t pos = 8;
-    size_t end = 0;
 
     if (client->commande_splited[1].find(',') != std::string::npos)
     {
-        while((end = commands.find(",", pos)) != std::string::npos)
+        std::stringstream ss(client->commande_splited[1]);
+        std::string token;
+        while (std::getline(ss, token, ','))
         {
-                command  = commands.substr(pos, end - pos);
-                targets.push_back(command);
-                pos = end + 1;
-        }
-        if(pos < commands.length())
-        {
-            command = commands.substr(pos, dots - pos -1);
-            targets.push_back(command);
+            targets.push_back(token);
         }
         for (size_t i = 0; i < targets.size(); i++)
         {
-            std::string& target = targets[i];
-            size_t pos = 0;
-            while ((pos = target.find(' ', pos)) != std::string::npos)
-            {
-                target.erase(pos, 1);
-            }
-            targets[i] = target;
             if (targets[i][0] == '#')
                 find_channel_and_sendmsg1(client, targets[i], message, error);
             else
@@ -665,7 +648,6 @@ void Server::sendmessage(std::string &message, Client* client, std::string &comm
     }
     else
     {
-        //passing client and client->commande_splited[1] because of channel above
         if (client->commande_splited[1][0] == '#')
             find_channel_and_sendmsg1(client,client->commande_splited[1], message, error);
         else
@@ -676,65 +658,25 @@ void Server::sendmessage(std::string &message, Client* client, std::string &comm
 void Server::_privMsgCmd(Client *client, bool error)
 {
     std::cout << "COMMANDS " << client->commande_splited.size() << std::endl;
-    std::string commands;
     std::string flag_com;  
 
     error == true ? (flag_com = "PRIVMSG") : flag_com = "NOTICE";
     std::cout << client->commande_splited[0] << "HELLO PRIV" <<  std::endl;
+
     if (client->commande_splited.size() < 2)
     {
         sendMsg(client->getFd(), ":" + client->getHost()+ " 411 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No recipient given " + flag_com + " " + "\r\n");
         return;
     }
-
-    for (std::vector<std::string>::const_iterator iter = client->commande_splited.begin(); iter != client->commande_splited.end(); ++iter) {
-        commands += *iter + " ";
-    }
-    commands.erase(commands.length() - 1, 1);
-
-    size_t dots = commands.find_last_of(":");
-    std::string message = getmessage(client, commands ,dots);
-
-
-    std::cout << "COMMANDS FIRST " << commands << std::endl;
-    std::cout << message << std::endl;
-
-    if (client->commande_splited.size() == 3)
+    else if (client->commande_splited.size() == 2)
     {
-        sendmessage(message, client ,commands, dots, error);
+        sendMsg(client->getFd(), ":" + client->getHost()+ " 412 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No text to send " + flag_com + " " + "\r\n");
+        return;
     }
-    else if (client->commande_splited.size() > 3)
-    {
-        std::vector<std::string> targets;
-        std::string command;
-        size_t pos = 8;
-        size_t end = 0;
 
-        while((end = commands.find(",", pos)) != std::string::npos)
-        {
-                command  = commands.substr(pos, end - pos);
-                targets.push_back(command);
-                pos = end + 1;
-        }
-        if(pos < commands.length())
-        {
-            command = commands.substr(pos, dots - pos -1);
-            targets.push_back(command);
-        }
-        for (size_t i = 0; i < targets.size(); i++)
-        {
-            std::string& target = targets[i];
-            size_t pos = 0;
-            while ((pos = target.find(' ', pos)) != std::string::npos)
-                target.erase(pos, 1);
-            targets[i] = target;
-            if (targets[i][0] == '#')
-                find_channel_and_sendmsg1(client, targets[i], message, error);
-            else
-                find_client_and_sendmsg1(client, targets[i], message, error);
-        }
-    }
-    return ;
+    std::string message = get_message(client);
+
+    sendmessage(message, client, error);
 }
 
 
