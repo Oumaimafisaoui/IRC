@@ -511,30 +511,33 @@ std::vector<std::string> Server::joinCmdParser(std::string params)
 
 void Server::_execute_commands(Client *client) 
 {
+    std::cout << "commande_splited[0]: " << ":" << client->commande_splited[0] << ":" << std::endl;
     if (client->commande_splited[0] == "JOIN" || client->commande_splited[0] == "join")
         _joinCmd(client);
-    if (client->commande_splited[0] == "MODE" || client->commande_splited[0] == "mode")
+    else if (client->commande_splited[0] == "MODE" || client->commande_splited[0] == "mode")
         _modeCmd(client);
-    if (client->commande_splited[0] == "PRIVMSG" || client->commande_splited[0] == "privmsg")
+    else if (client->commande_splited[0] == "PRIVMSG" || client->commande_splited[0] == "privmsg")
         _privMsgCmd(client, true);
-    if (client->commande_splited[0] == "NOTICE" || client->commande_splited[0] == "notice")
+    else if (client->commande_splited[0] == "NOTICE" || client->commande_splited[0] == "notice")
         _privMsgCmd(client, false);
-    if (client->commande_splited[0] == "TOPIC" || client->commande_splited[0] == "topic")
+    else if (client->commande_splited[0] == "TOPIC" || client->commande_splited[0] == "topic")
         _topicCmd(client);
-    if (client->commande_splited[0] == "INVITE" || client->commande_splited[0] == "invite")
+    else if (client->commande_splited[0] == "INVITE" || client->commande_splited[0] == "invite")
         _inviteCmd(client);
-    if (client->commande_splited[0] == "/BOT" || client->commande_splited[0] == "/bot")
+    else if (client->commande_splited[0] == "/BOT" || client->commande_splited[0] == "/bot")
         _botCmd(client);
-    if (client->commande_splited[0] == "PART" || client->commande_splited[0] == "part")
+    else if (client->commande_splited[0] == "PART" || client->commande_splited[0] == "part")
         _partCmd(client);
-    if (client->commande_splited[0] == "KICK" || client->commande_splited[0] == "kick")
+    else if (client->commande_splited[0] == "KICK" || client->commande_splited[0] == "kick")
         _kickCmd(client);
-    if (client->commande_splited[0] == "QUIT" || client->commande_splited[0] == "quit")
+    else if (client->commande_splited[0] == "QUIT" || client->commande_splited[0] == "quit")
         _quitCmd(client);
-    if(client->commande_splited[0] == "WALLOPS" || client->commande_splited[0] == "wallops")
+    else if(client->commande_splited[0] == "WALLOPS" || client->commande_splited[0] == "wallops")
         _wallopsCmd(client);
-    if(client->commande_splited[0] == "OPER" || client->commande_splited[0] == "oper")
+    else if(client->commande_splited[0] == "OPER" || client->commande_splited[0] == "oper")
         _operCmd(client);
+    else if(client->commande_splited[0] == "PONG" || client->commande_splited[0] == "PING")
+        return ;
     else
         sendMsg(client->getFd(), ":IRC 421 " + client->getNick() + " " + client->commande_splited[0]  + " :Unknown command\r\n");
 }
@@ -700,37 +703,38 @@ void Server::_privMsgCmd(Client *client, bool error)
     {
         sendmessage(message, client ,commands, dots, error);
     }
-    // else if (client->commande_splited.size() > 3)
-    // {
-    //     std::vector<std::string> targets;
-    //     std::string command;
-    //     size_t pos = 8;
-    //     size_t end = 0;
+    else if (client->commande_splited.size() > 3)
+    {
+        std::vector<std::string> targets;
+        std::string command;
+        size_t pos = 8;
+        size_t end = 0;
 
-    //     while((end = commands.find(",", pos)) != std::string::npos)
-    //     {
-    //             command  = commands.substr(pos, end - pos);
-    //             targets.push_back(command);
-    //             pos = end + 1;
-    //     }
-    //     if(pos < commands.length())
-    //     {
-    //         command = commands.substr(pos, dots - pos -1);
-    //         targets.push_back(command);
-    //     }
-    //     for (size_t i = 0; i < targets.size(); i++)
-    //     {
-    //         std::string& target = targets[i];
-    //         size_t pos = 0;
-    //         while ((pos = target.find(' ', pos)) != std::string::npos)
-    //             target.erase(pos, 1);
-    //         targets[i] = target;
-    //         if (targets[i][0] == '#')
-    //             find_channel_and_sendmsg1(targets[i], message, error);
-    //         else
-    //             find_client_and_sendmsg1(targets[i], message, error);
-    //     }
-    // }
+        while((end = commands.find(",", pos)) != std::string::npos)
+        {
+                command  = commands.substr(pos, end - pos);
+                targets.push_back(command);
+                pos = end + 1;
+        }
+        if(pos < commands.length())
+        {
+            command = commands.substr(pos, dots - pos -1);
+            targets.push_back(command);
+        }
+        for (size_t i = 0; i < targets.size(); i++)
+        {
+            std::string& target = targets[i];
+            size_t pos = 0;
+            while ((pos = target.find(' ', pos)) != std::string::npos)
+                target.erase(pos, 1);
+            targets[i] = target;
+            if (targets[i][0] == '#')
+                find_channel_and_sendmsg1(client, targets[i], message, error);
+            else
+                find_client_and_sendmsg1(client, targets[i], message, error);
+        }
+    }
+    return ;
 }
 
 
