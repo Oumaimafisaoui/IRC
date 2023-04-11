@@ -173,10 +173,12 @@ void Client::userCmd()
         {
             this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
             this->isRegistered = true;
-        } else 
+        } 
+        else 
         {
-            // quit client from server ( rm form pfds & clients & close fd & send 404 )
-            // QUIT
+            close(this->getFd());
+            server.getClients().erase(this->getFd());
+            std::cout << "client went away!!" << std::endl;
         }
     }
     return ;
