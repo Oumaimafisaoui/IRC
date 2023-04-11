@@ -552,10 +552,10 @@ void Server::_wallopsCmd(Client *client)
         sendMsg(client->getFd(), errorMessage);
         return;
     }
-    std::string message =  ":" + client->get_nick_adresse(client) + " WALLOPS :" + client->commande_splited[1] + "\r\n";
     for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
     {
-        if (it->second->get_isoperator() == false)
+        if (
+            it->second->get_isoperator() == false)
             sendMsg(it->second->getFd(), message);
     }
     return ;
@@ -576,6 +576,10 @@ std::string Server::get_message(Client *client)
         if (i != message_vec.size() - 1)
             message += " ";
     }
+    size_t pos = message.find(':');
+    if (pos != std::string::npos)
+        message = message.substr(pos + 1);
+
     return (message);
 }
 
@@ -673,9 +677,7 @@ void Server::_privMsgCmd(Client *client, bool error)
         sendMsg(client->getFd(), ":" + client->getHost()+ " 412 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No text to send " + flag_com + " " + "\r\n");
         return;
     }
-
     std::string message = get_message(client);
-
     sendmessage(message, client, error);
 }
 
