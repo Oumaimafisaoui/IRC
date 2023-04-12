@@ -550,18 +550,31 @@ void Server::_execute_commands(Client *client)
 
 void Server::_wallopsCmd(Client *client)
 {
+    std::vector<std::string> message_vec;
+
+    for(size_t i = 1; i < client->commande_splited.size(); i++)
+    {
+        message_vec.push_back(client->commande_splited[i]);
+    }
+    std::string message = "";
+    for(size_t i = 0; i < message_vec.size(); i++)
+    {
+        message += message_vec[i];
+        if (i != message_vec.size() - 1)
+            message += " ";
+    }
     if(client->commande_splited.size() < 2)
     {
         std::string errorMessage = ":" + client->getHost() + "  412  " + (client->getNick().empty() ? "*" : client->getNick()) + " " + ":No text to send\r\n";
         sendMsg(client->getFd(), errorMessage);
         return;
     }
+    std::cout << message << std::endl;
     for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
     {
         if (it->second->get_isoperator() == false)
         {
             sendMsg(it->second->getFd(), message);
-            std::cout << message << std::endl;
         }
     }
     return ;
