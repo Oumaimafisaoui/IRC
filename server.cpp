@@ -304,13 +304,18 @@ void Server::client_not_connected(Client *client)
         this->_command_splited = command_split;
         if (_isNotChannelCmd(command_split)) {
             client->setCommand(command_split);
-            client->execute();
+            if (!client->execute())
+            {
+                clients.erase(client->getFd());
+                delete client;
+                return ; 
+            }
         }
         command_split.clear();
         this->client->buff_client.clear();
         ++k; 
    }
-
+    return; 
 }
 
 std::vector<std::string> Server::ft_parser(std::vector<std::string> params)
@@ -554,7 +559,10 @@ void Server::_wallopsCmd(Client *client)
     for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
     {
         if (it->second->get_isoperator() == false)
+        {
             sendMsg(it->second->getFd(), message);
+            std::cout << message << std::endl;
+        }
     }
     return ;
 }
@@ -597,8 +605,8 @@ void Server::find_channel_and_sendmsg1(Client *client, std::string &target, std:
         const std::set<Client*>& clients = tmp->getClients(); 
         for (std::set<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
         {
-            //if the client is not the operator : how?
-            sendMsg((*it)->getFd(), ":" + client->getHost() + " G " + tmp->getChannelName() + " " + message + "\r\n");
+            if((*it)->get_isoperator() == false)
+                sendMsg((*it)->getFd(), ":" + client->getHost() + " G " + tmp->getChannelName() + " " + message + "\r\n");
         }
     }
     return ;
@@ -866,7 +874,6 @@ void Server::_quitCmd(Client *client)
         if (_channels[i]->isMember(client))
             _channels[i]->clearMember(client);
     }
-    close(client->getFd());
     clients.erase(client->getFd());
     delete client;
     std::cout << "client went away!!" << std::endl;

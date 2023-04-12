@@ -47,10 +47,10 @@ class Client
         void setNick(std::string nick);
         void setHost(std::string host);
         void setUser(std::string user);
-        void execute();
-        void passCmd();
-        void userCmd();
-        void nickCmd();
+        int execute();
+        int passCmd();
+        int userCmd();
+        int nickCmd();
         std::string get_nick_adresse(Client * tmp);
 }; 
 
