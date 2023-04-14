@@ -68,7 +68,7 @@ void Server::_botCmd(Client *client)
         for (int i = 0; i < line; i++)
             std::getline(file, quote);
         file.close();
-        sendMsg(client->getFd(), "Hello "+ client->getNick() + " ,Here is your Quote for today: " + quote + "\r\n");
+        sendMsg(client->getFd(), ":" + client->get_nick_adresse(client) + " NOTICE " + client->getNick() + " :" + " ,Here is your Quote for today: " + quote + "\r\n");
     }
     else if (client->commande_splited[1] == "Joke")
     {
@@ -78,7 +78,7 @@ void Server::_botCmd(Client *client)
         for (int i = 0; i < line; i++)
             std::getline(file, quote);
         file.close();
-        sendMsg(client->getFd(), "Hello "+ client->getNick() + " ,Here is your Joke for today: " + quote + "\r\n");
+          sendMsg(client->getFd(), ":" + client->get_nick_adresse(client) + " NOTICE " + client->getNick() + " :" + " ,Here is your Joke for today: " + quote + "\r\n");
     }
     else if (client->commande_splited[1] == "Time")
     {
@@ -87,12 +87,12 @@ void Server::_botCmd(Client *client)
         std::ostringstream oss;
         oss << ltm->tm_hour << ":" << ltm->tm_min << ":" << ltm->tm_sec;
         std::string time = oss.str();
-        sendMsg(client->getFd(), "Hello "+ client->getNick() + " ,Here is the time: " + time + "\r\n");
+          sendMsg(client->getFd(), ":" + client->get_nick_adresse(client) + " NOTICE " + client->getNick() + " :" + " ,Here is the time: " + time + "\r\n");
 
     }
     else
     {
-        sendMsg(client->getFd(), "461 " + client->getNick() + " BOT :Wrong command!\r\n");
+          sendMsg(client->getFd(), ":" + client->get_nick_adresse(client) + " NOTICE " + client->getNick() + " :" + " BOT :Wrong command!\r\n");
         return ;
     }
     
@@ -318,21 +318,6 @@ void Server::client_not_connected(Client *client)
         this->client->buff_client.clear();
         ++k; 
    }
-//    if (error)
-//    {
-//         sendMsg(client->getFd(), "ERROR : Closing Link 0.0.0.0\r\n");
-//         clients.erase(client->getFd());
-//         for (std::vector<pollfd>::iterator iter = poll_vec.begin(); iter != poll_vec.end(); iter++)
-//         {
-//             if ((*iter).fd == client->getFd())
-//             {
-//                 poll_vec.erase(iter);
-//                 break ;
-//             }
-//         }
-//         delete client;
-//         return ;
-//    }
    return; 
 }
 
@@ -459,19 +444,6 @@ bool Server::_isNotChannelCmd(std::vector<std::string> command_splited)
 
 bool Server::findNick(std::string &nick)
 {
-    //TODO: enlver cette boucel
-    // bool ret = false;
-
-    // for (std::map<int, Client*>::const_iterator it = this->clients.cbegin(); it != this->clients.cend(); ++it)
-    // {
-    //     if (it->second->pass_is_set)
-    //     {
-    //         ret = true;
-    //         break ;
-    //     }
-    // }
-    // if (ret)
-    //     return false;
     for (std::map<int, Client*>::const_iterator it = this->clients.cbegin(); it != this->clients.cend(); ++it)
     {
         std::cout << it->second->getNick() << std::endl;
@@ -502,7 +474,6 @@ Channel *Server::_findChannel(std::string name)
     return (NULL);
 }
 
-/** Needs modification : clients is not a vector object it is a map*/
 
 Client *Server::findClientByNick(std::string nick)
 {
