@@ -228,6 +228,13 @@ void Channel::kickClient(Client *_client, std::string nick, std::string comment)
     clearMember(user);
 }
 
+bool Channel::isOperator_wm(Client *_client)
+{
+    if (this->_operators.find(_client->getNick()) == this->_operators.end())
+        return false;
+    return true;
+}
+
 void Channel::clearMember(Client *_client)
 {
     _clientList.erase(_client);

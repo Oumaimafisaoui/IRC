@@ -45,6 +45,7 @@ class Channel {
         void removeIt(Client *_client);
         void kickClient(Client *_client, std::string nick, std::string comment);
         void clearMember(Client *_client);
+        bool isOperator_wm(Client *_client);
 };
 
 #endif

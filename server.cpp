@@ -605,6 +605,9 @@ std::string Server::get_message(Client *client)
 void Server::find_channel_and_sendmsg1(Client *client, std::string &target, std::string &message, bool error)
 {
     Channel *tmp = find_channel(target);
+    std::string flag_com;
+
+    error == true ? (flag_com = "PRIVMSG") : flag_com = "NOTICE";
 
     if (!tmp && error)
     {
@@ -615,11 +618,15 @@ void Server::find_channel_and_sendmsg1(Client *client, std::string &target, std:
         return ;
     else
     {
-        const std::set<Client*>& clients = tmp->getClients(); 
-        for (std::set<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
+        std::set<Client*> clients = tmp->getClients(); 
+        for (std::set<Client*>::iterator it = clients.begin(); it != clients.end(); it++)
         {
-            if((*it)->get_isoperator() == false)
-                sendMsg((*it)->getFd(), ":" + client->getHost() + " G " + tmp->getChannelName() + " " + message + "\r\n");
+                if((*it)->getNick() == client->getNick())
+                {
+                    sendMsg((*it)->getFd(), ":" + client->getHost() + " " + flag_com + " " + tmp->getChannelName() + " :" + message + "\r\n");
+                    std::cout << *it << std::endl;
+                }
+            
         }
     }
     return ;
@@ -631,7 +638,7 @@ void Server::find_client_and_sendmsg1(Client *client, std::string &target, std::
     Client *tmp = find_client(target);
     std::string flag_com;  
 
-    error ? (flag_com = "PRIVMSG") : flag_com = "NOTICE";
+    error == true ? (flag_com = "PRIVMSG") : flag_com = "NOTICE";
 
     if (tmp != NULL)
     {
@@ -695,6 +702,7 @@ void Server::_privMsgCmd(Client *client, bool error)
         return;
     }
     std::string message = get_message(client);
+    std::cout << message << std::endl;
     sendmessage(message, client, error);
 }
 
