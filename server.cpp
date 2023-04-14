@@ -52,7 +52,7 @@ void Server::_botCmd(Client *client)
 {
     if(client->commande_splited.size() < 2)
     {
-        sendMsg(client->getFd(), " BOT :Welcome to IRC Bot ! Please insert /bot Quote or /bot Joke or /bot Time and enjoy!\r\n");
+        sendMsg(client->getFd(), ":" + client->get_nick_adresse(client) + " NOTICE " + client->getNick() + " :" + "BOT :Welcome to IRC Bot ! Please insert /bot Quote or /bot Joke or /bot Time and enjoy!\r\n");
         return ;
     }
     if (client->commande_splited.size() > 3)
@@ -552,7 +552,7 @@ void Server::_execute_commands(Client *client)
         _topicCmd(client);
     else if (client->commande_splited[0] == "INVITE" || client->commande_splited[0] == "invite")
         _inviteCmd(client);
-    else if (client->commande_splited[0] == "/BOT" || client->commande_splited[0] == "/bot")
+    else if (client->commande_splited[0] == "BOT" || client->commande_splited[0] == "bot")
         _botCmd(client);
     else if (client->commande_splited[0] == "PART" || client->commande_splited[0] == "part")
         _partCmd(client);
@@ -573,18 +573,31 @@ void Server::_execute_commands(Client *client)
 
 void Server::_wallopsCmd(Client *client)
 {
+    std::vector<std::string> message_vec;
+
+    for(size_t i = 1; i < client->commande_splited.size(); i++)
+    {
+        message_vec.push_back(client->commande_splited[i]);
+    }
+    std::string message = "";
+    for(size_t i = 0; i < message_vec.size(); i++)
+    {
+        message += message_vec[i];
+        if (i != message_vec.size() - 1)
+            message += " ";
+    }
     if(client->commande_splited.size() < 2)
     {
         std::string errorMessage = ":" + client->getHost() + "  412  " + (client->getNick().empty() ? "*" : client->getNick()) + " " + ":No text to send\r\n";
         sendMsg(client->getFd(), errorMessage);
         return;
     }
+    std::cout << message << std::endl;
     for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
     {
         if (it->second->get_isoperator() == false)
         {
             sendMsg(it->second->getFd(), message);
-            std::cout << message << std::endl;
         }
     }
     return ;
@@ -615,6 +628,9 @@ std::string Server::get_message(Client *client)
 void Server::find_channel_and_sendmsg1(Client *client, std::string &target, std::string &message, bool error)
 {
     Channel *tmp = find_channel(target);
+    std::string flag_com;
+
+    error == true ? (flag_com = "PRIVMSG") : flag_com = "NOTICE";
 
     if (!tmp && error)
     {
@@ -625,12 +641,8 @@ void Server::find_channel_and_sendmsg1(Client *client, std::string &target, std:
         return ;
     else
     {
-        const std::set<Client*>& clients = tmp->getClients(); 
-        for (std::set<Client*>::const_iterator it = clients.begin(); it != clients.end(); ++it)
-        {
-            if((*it)->get_isoperator() == false)
-                sendMsg((*it)->getFd(), ":" + client->getHost() + " G " + tmp->getChannelName() + " " + message + "\r\n");
-        }
+        std::set<Client*> clients = tmp->getClients(); 
+        tmp->sendToOthers(":" + client->getHost() + " " + flag_com + " " + tmp->getChannelName() + " :" + message + "\r\n", client->getFd());
     }
     return ;
 }
@@ -641,7 +653,7 @@ void Server::find_client_and_sendmsg1(Client *client, std::string &target, std::
     Client *tmp = find_client(target);
     std::string flag_com;  
 
-    error ? (flag_com = "PRIVMSG") : flag_com = "NOTICE";
+    error == true ? (flag_com = "PRIVMSG") : flag_com = "NOTICE";
 
     if (tmp != NULL)
     {
@@ -705,6 +717,7 @@ void Server::_privMsgCmd(Client *client, bool error)
         return;
     }
     std::string message = get_message(client);
+    std::cout << message << std::endl;
     sendmessage(message, client, error);
 }
 

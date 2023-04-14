@@ -29,6 +29,7 @@ class Channel {
         void removeMember(Client *_client, std::string raison);
         bool isMember(Client *_client);
         void sendToMembers(std::string message);
+        void sendToOthers(std::string message,  int fd);
         void sendToOne(int fd, std::string message);
 
         void setTopic(std::string _topic, Client *_client, int n);
@@ -45,6 +46,7 @@ class Channel {
         void removeIt(Client *_client);
         void kickClient(Client *_client, std::string nick, std::string comment);
         void clearMember(Client *_client);
+        bool isOperator_wm(Client *_client);
 };
 
 #endif

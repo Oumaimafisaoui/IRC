@@ -1,4 +1,5 @@
 #include "channel.hpp"
+#include "client.hpp"
 
 Channel::Channel(std::string name, Client *_client)
 {
@@ -228,6 +229,13 @@ void Channel::kickClient(Client *_client, std::string nick, std::string comment)
     clearMember(user);
 }
 
+bool Channel::isOperator_wm(Client *_client)
+{
+    if (this->_operators.find(_client->getNick()) == this->_operators.end())
+        return false;
+    return true;
+}
+
 void Channel::clearMember(Client *_client)
 {
     _clientList.erase(_client);
@@ -245,4 +253,19 @@ void Channel::removeIt(Client *_client)
         return ;
     }
     return ;
+}
+
+void Channel::sendToOthers(std::string message, int fd)
+{
+    std::set<Client *>::iterator iterator;
+    message += "\r\n";
+    for (iterator = _clientList.begin(); iterator != _clientList.end(); iterator++)
+    {
+        if ((*iterator)->getFd() != fd )
+        {
+            if (send((*iterator)->getFd(), message.c_str(), message.length(), 0) == -1)
+                perror ("send");
+            std::cout << " first :" << fd << " second " << (*iterator)->getFd() << std::endl;
+        }
+    }
 }
