@@ -31,8 +31,14 @@ bool Client::get_isoperator() const
 }
 Client::~Client()
 {
-    close(this->client_fd);
+    if (this->client_fd != -1) {
+        shutdown(this->client_fd, SHUT_WR); // shutdown socket for writing
+        char buf[4096];
+        while (recv(this->client_fd, buf, 4096, 0) > 0) {} // read and discard any remaining data
+        close(this->client_fd);
+    }
 }
+
 std::string Client::getNick() const
 {
     return (this->nickName);
@@ -113,6 +119,8 @@ bool Client::checkIsRegister() {
 
 int Client::nickCmd()
 {
+
+  
     if (auth[0] && auth[1] &&  auth[2] && !isRegistered)
         isRegistered = true;
     if (this->commande_splited.size() < 2)
@@ -136,9 +144,8 @@ int Client::nickCmd()
         return 0;
     }
     if (this->server.findNick(this->commande_splited[1]))
-    {
-        this->server.sendMsg(this->getFd(), ":IRC 433 " + (this->getNick().empty() ? "*" : this->getNick()) + " " + this->commande_splited[1] +  " :Nickname is already in use\r\n");
-          
+    {;
+        this->server.sendMsg(this->getFd(), ":IRC 433 " + (this->getNick().empty() ? "*" : this->getNick()) + " " + this->commande_splited[1] +  " :Nickname is already in use\r\n"); 
         return 0;
     }
     else
@@ -195,10 +202,11 @@ int Client::userCmd()
 
 int Client::execute()
 {
-    if (this->commande_splited.size() < 1)
-    {
-        return 1;
-    }
+    // if (this->commande_splited.size() < 1)
+    // {
+    //     return 1;
+    // }
+
     if (this->commande_splited[0] == "PASS" || this->commande_splited[0] == "pass")
     {
         if(this->passCmd())

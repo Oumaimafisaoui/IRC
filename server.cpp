@@ -1,5 +1,8 @@
 #include "server.hpp"
 #include "sys/socket.h"
+#include <string>
+#include <sys/_types/_size_t.h>
+#include <sys/poll.h>
 
 //The setsockopt() function allows the user to set various socket options, such as the socket's timeout value, the maximum size of the socket's send and receive buffer
 const char *Server::ProblemInFdServer::what() const throw()
@@ -258,6 +261,7 @@ void Server::client_not_connected(Client *client)
    std::string command;
    size_t pos = 0;
    size_t end = 0;
+   int error = 0;
 
    std::vector<std::string> command_split;
    std::string key;
@@ -275,7 +279,8 @@ void Server::client_not_connected(Client *client)
         command = client->buff_client.substr(pos, client->buff_client.length() - pos);
         message_split.push_back(command);
    }
- 
+
+
    while (k < message_split.size())
    {
         std::string  str = message_split[k];
@@ -306,16 +311,29 @@ void Server::client_not_connected(Client *client)
             client->setCommand(command_split);
             if (!client->execute())
             {
-                clients.erase(client->getFd());
-                delete client;
-                return ; 
+                error = 1; 
             }
         }
         command_split.clear();
         this->client->buff_client.clear();
         ++k; 
    }
-    return; 
+//    if (error)
+//    {
+//         sendMsg(client->getFd(), "ERROR : Closing Link 0.0.0.0\r\n");
+//         clients.erase(client->getFd());
+//         for (std::vector<pollfd>::iterator iter = poll_vec.begin(); iter != poll_vec.end(); iter++)
+//         {
+//             if ((*iter).fd == client->getFd())
+//             {
+//                 poll_vec.erase(iter);
+//                 break ;
+//             }
+//         }
+//         delete client;
+//         return ;
+//    }
+   return; 
 }
 
 std::vector<std::string> Server::ft_parser(std::vector<std::string> params)
@@ -405,9 +423,14 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                 int len = recv(current.fd, this->buffer, 500, 0);
                 // std::cout << "This is the this->buffer value: " << this->buffer << std::endl; 
                 receive_message(i + poll_vec.begin(), clients[current.fd], len);
-                size_t pos = this->client->buff_client.find("\n");
-                if ( pos != std::string::npos) {
-                     this->client->buff_client =  this->client->buff_client.substr(pos + 1,  this->client->buff_client.size());
+                if (this->clients.find(current.fd) != this->clients.end())
+                {
+                    std::cout << clients.size() << std::endl;
+                    size_t pos = this->client->buff_client.find("\n");
+                    if ( pos != std::string::npos) {
+                        this->client->buff_client =  this->client->buff_client.substr(pos + 1,  this->client->buff_client.size());
+                    }
+                    std::cout << "end" << std::endl;
                 }
             }
         }
@@ -416,10 +439,10 @@ Server::Server(int port, std::string password): password(password), port(port) ,
 
 void Server::sendMsg(int fd, std::string msg)
 {
-    if (send(fd, msg.c_str(), msg.length(), 0) == -1)
-    {
-        perror("send");
-        return;
+     int ret = send(fd, msg.c_str(), msg.length(), 0);
+    if (ret == -1 && (errno == EPIPE || errno == ECONNRESET)) {
+        close(fd);
+        fd = -1;
     }
 }
 
@@ -869,11 +892,38 @@ void Server::_kickCmd(Client *client)
 
 void Server::_quitCmd(Client *client)
 {
+    std::string arg = "";
+    size_t size = client->commande_splited.size();
+    if (size > 1)
+    {
+        if (client->commande_splited[1][0] == ':')
+        {
+            for (size_t i = 1; i < size ; i++)
+            {
+                if (i == 1)
+                    arg += client->commande_splited[i].substr(1, size);
+                else
+                    arg += client->commande_splited[i];
+                if (i + 1 != size)
+                    arg += " ";
+            }
+        }
+        else {
+            arg = client->commande_splited[1];
+        }
+    }
+    else {
+        arg = client->getNick();
+    }
     for (size_t i = 0; i < _channels.size(); i++)
     {
         if (_channels[i]->isMember(client))
+        {
             _channels[i]->clearMember(client);
+            _channels[i]->sendToMembers(":" + client->get_nick_adresse(NULL) + " QUIT " + ":Quit: " + arg);
+        }
     }
+    sendMsg(client->getFd(), "ERROR : Closing Link 0.0.0.5\r\n");
     clients.erase(client->getFd());
     delete client;
     std::cout << "client went away!!" << std::endl;
@@ -896,7 +946,7 @@ void Server::_operCmd(Client *client)
     {
         client->setOperatorStatus(true);
         sendMsg(client->getFd(), ":IRC 381 " + client->getNick() + " :You are now an IRC operator\r\n");
-        sendMsg(client->getFd(), ":" + client->get_nick_adresse(NULL) + " " + "MODE +O");
+        sendMsg(client->getFd(), ":" + client->get_nick_adresse(NULL) + " " + "MODE +O\r\n");
     }
 }
 
