@@ -119,23 +119,21 @@ bool Client::checkIsRegister() {
 
 int Client::nickCmd()
 {
-
-  
     if (auth[0] && auth[1] &&  auth[2] && !isRegistered)
         isRegistered = true;
-    if (this->commande_splited.size() < 2)
+    else if (this->commande_splited.size() < 2)
     {
         this->server.sendMsg(this->getFd(), ":IRC 431 " + (this->getNick().empty() ? "*" : this->getNick()) + " " + this->commande_splited[0] +  " :No nickname given\r\n");
         
         return 0;
     }
-    if (!this->pass_is_set)
+    else if (!this->pass_is_set)
     {
         this->server.sendMsg(this->getFd(), ":IRC 434 " + (this->getNick().empty() ? "*" : this->getNick()) + " :Pass is not set\r\n");
         
         return 0;
     }
-    if (this->commande_splited[1].find_first_of(" ,*?!@.") != std::string::npos ||
+    else if (this->commande_splited[1].find_first_of(" ,*?!@.") != std::string::npos ||
     this->commande_splited[1][0] == '$' || this->commande_splited[1][0] == ':' || 
     this->commande_splited[1][0] == '#' || this->commande_splited[1].size() > 9)
     {
@@ -143,8 +141,8 @@ int Client::nickCmd()
           
         return 0;
     }
-    if (this->server.findNick(this->commande_splited[1]))
-    {;
+    else if (this->server.findNick(this->commande_splited[1]))
+    {
         this->server.sendMsg(this->getFd(), ":IRC 433 " + (this->getNick().empty() ? "*" : this->getNick()) + " " + this->commande_splited[1] +  " :Nickname is already in use\r\n"); 
         return 0;
     }
@@ -162,25 +160,24 @@ int Client::userCmd()
 {
     if (auth[0] && auth[1] &&  auth[2] && !isRegistered)
         isRegistered = true;
-    if (this->commande_splited.size() < 5)
+    else if (this->commande_splited.size() < 5)
     {
         this->server.sendMsg(this->getFd(), ":IRC 461 " + (this->getNick().empty() ? "*" : this->getNick()) + " " + this->commande_splited[0] +  " :Not enough parameters\r\n");
-        
         return 0;
     }
-    if (!this->pass_is_set)
+    else if (!this->pass_is_set)
     {
         this->server.sendMsg(this->getFd(), ":IRC 434 " + (this->getNick().empty() ? "*" : this->getNick()) + " :Pass is not set\r\n");
         
         return 0;
     }
-    if (!this->nick_is_set)
+    else if (!this->nick_is_set)
     {
         this->server.sendMsg(this->getFd(), ":IRC 434 " + (this->getNick().empty() ? "*" : this->getNick()) + " :Nick is not set\r\n");
         
         return 0;
     }
-    if (this->isRegistered)
+    else if (this->isRegistered)
     {
         this->server.sendMsg(this->getFd(), ":IRC 462 " + this->commande_splited[0] +  " :You may not reregister\r\n");
         

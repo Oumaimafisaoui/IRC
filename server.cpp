@@ -4,7 +4,6 @@
 #include <sys/_types/_size_t.h>
 #include <sys/poll.h>
 
-//The setsockopt() function allows the user to set various socket options, such as the socket's timeout value, the maximum size of the socket's send and receive buffer
 const char *Server::ProblemInFdServer::what() const throw()
 {
     return ("Problem in fd server!");
@@ -87,7 +86,7 @@ void Server::_botCmd(Client *client)
         std::ostringstream oss;
         oss << ltm->tm_hour << ":" << ltm->tm_min << ":" << ltm->tm_sec;
         std::string time = oss.str();
-          sendMsg(client->getFd(), ":" + client->get_nick_adresse(client) + " NOTICE " + client->getNick() + " :" + " ,Here is the time: " + time + "\r\n");
+          sendMsg(client->getFd(), ":" + client->get_nick_adresse(client) + " NOTICE " + client->getNick() + " :" + " Here is the time: " + time + "\r\n");
 
     }
     else
@@ -201,15 +200,12 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         }
         else
         {
-            // std::cout << "new buffer" << std::endl;
             std::string buff = this->buffer;
             client->buff_client.append(buff);
-            // std::cout << "This is the client->buff_client :" << client->buff_client;
             std::size_t pos = 0;
             while ((pos = client->buff_client.find("\r\n", pos)) != std::string::npos) 
             { 
                 client->buff_client.replace(pos, 2, "\n");
-                // std::cout << "replacing" << std::endl;
             }
             if (client->buff_client.find('\n') != std::string::npos && client->buff_client.size() > 1)
             {
@@ -444,6 +440,8 @@ bool Server::_isNotChannelCmd(std::vector<std::string> command_splited)
 
 bool Server::findNick(std::string &nick)
 {
+    if(clients.size() == 0)
+        return false;
     for (std::map<int, Client*>::const_iterator it = this->clients.cbegin(); it != this->clients.cend(); ++it)
     {
         std::cout << it->second->getNick() << std::endl;
