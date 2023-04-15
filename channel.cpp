@@ -1,5 +1,6 @@
 #include "channel.hpp"
 #include "client.hpp"
+#include <string>
 
 Channel::Channel(std::string name, Client *_client)
 {
@@ -12,6 +13,8 @@ Channel::Channel(std::string name, Client *_client)
     this->_topicMode = false;
     this->_topic = "";
     sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " " + "JOIN" + " :" + _name);
+    sendToOne(_client->getFd(), ":IRC 353 " + _client->getNick() + " = " + _name + " :" + "@" + _client->getNick());
+    sendToOne(_client->getFd(), ":IRC 366 " + _client->getNick() + " " + _name + " :End of /NAMES list.");
 }
 
 std::string Channel::getChannelName()
@@ -42,6 +45,24 @@ void Channel::addMember(Client *_client, std::string password)
     {
         _clientList.insert(_client);
         sendToMembers(":" + _client->get_nick_adresse(NULL) + " JOIN" + " :" + _name);
+        std::string names = "";
+        for (std::set<Client *>::iterator iterator = _clientList.begin(); iterator != _clientList.end(); iterator++)
+        {
+            if (isOperator_wm(*iterator))
+            {
+                names += "@" + (*iterator)->getNick();
+                std::cout << names << std::endl;
+            }
+            else {
+                names = (*iterator)->getNick();
+            }
+            if (*iterator != *_clientList.rbegin())
+            {
+                names += " ";
+            }
+        }
+        sendToOne(_client->getFd(), ":IRC 353 " + _client->getNick() + " = " + _name + " :" + names);
+        sendToOne(_client->getFd(), ":IRC 366 " + _client->getNick() + " " + _name + " :End of /NAMES list.");
         if (_topic != "")
             sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " TOPIC" + " :" + _topic);
     }
@@ -204,8 +225,16 @@ void Channel::removeMember(Client *_client, std::string raison)
        sendToOne(_client->getFd(), ":IRC 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
         return ;
     }
-    sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "PART " + _name + " " + raison);
+    sendToMembers(":" + _client->get_nick_adresse(NULL) + " PART " + _name + " " + raison);
     clearMember(_client);
+    if (this->_operators.size() == 0)
+    {
+        if (this->_clientList.size())
+        {
+
+            this->_operators.insert((*_clientList.begin())->getNick());
+        }
+    }
 }
 
 void Channel::kickClient(Client *_client, std::string nick, std::string comment) 
