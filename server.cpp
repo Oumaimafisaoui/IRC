@@ -215,6 +215,7 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
                     client_not_connected(client);
                 else
                     client_connected(client);
+                client->buff_client.clear();
             } 
         }
     }
@@ -280,6 +281,7 @@ void Server::client_not_connected(Client *client)
 
    while (k < message_split.size())
    {
+        command_split.clear();
         std::string  str = message_split[k];
         std::string temp = "";
         for (size_t i = 0; i < str.length(); i++)
@@ -298,10 +300,10 @@ void Server::client_not_connected(Client *client)
         if (temp[0] != '\0' && temp[0] != '\n')
             command_split.push_back(temp);
         
-        std::cerr << "{";
-        for (unsigned int i = 0;i < command_split.size();++i)
-            std::cerr << command_split[i] << " ";
-        std::cerr << "}\n";
+        // std::cerr << "{";
+        // for (unsigned int i = 0;i < command_split.size();++i)
+        //     std::cerr << command_split[i] << " ";
+        // std::cerr << "}\n";
 
         this->_command_splited = command_split;
         if (_isNotChannelCmd(command_split)) {
@@ -320,6 +322,7 @@ void Server::client_not_connected(Client *client)
         ++k; 
    }
    std::cout << "out" << std::endl;
+   std::cout << client->buff_client.size() << " buffer size " << std::endl;
    return; 
 }
 
@@ -434,6 +437,7 @@ void Server::sendMsg(int fd, std::string msg)
 
 bool Server::_isNotChannelCmd(std::vector<std::string> command_splited)
 {
+    std::cout << "HEEERE IS COMMAND[0]" <<  this->_command_splited[0] << std::endl;
     if (command_splited[0] == "USER" || command_splited[0] == "user")
         return true;
     if (command_splited[0] == "PASS" || command_splited[0] == "pass")
@@ -449,7 +453,7 @@ bool Server::findNick(std::string &nick)
         return false;
     for (std::map<int, Client*>::iterator it = this->clients.begin(); it != this->clients.end(); ++it)
     {
-        if (it->second->getNick() == nick)
+        if (it->second->getNick() == nick && it->second->getNick() != "")
             return true;
     }
     return false;

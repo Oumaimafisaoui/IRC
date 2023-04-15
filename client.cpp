@@ -177,8 +177,8 @@ int Client::userCmd()
 {
     if(this->error_pss == 0)
     {
-        // if (auth[0] && auth[1] &&  auth[2] && !isRegistered)
-        //     isRegistered = true;
+        if (auth[0] && auth[1] &&  auth[2] && !isRegistered)
+            isRegistered = true;
         if (this->commande_splited.size() < 5)
         {
             this->server.sendMsg(this->getFd(), ":IRC 461 " + (this->getNick().empty() ? "*" : this->getNick()) + " " + this->commande_splited[0] +  " :Not enough parameters\r\n");
@@ -201,14 +201,21 @@ int Client::userCmd()
         }
         else
         {
-            this->setUser(commande_splited[1]);
-            auth[2] = true;
-            if (auth[0] && auth[1] && auth[2])
+            if(pass_is_set == 1 && nick_is_set == 1)
             {
-                this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
-                this->isRegistered = true;
-                return (1);
-            } 
+                this->setUser(commande_splited[1]);
+                auth[2] = true;
+                if (auth[0] && auth[1] && auth[2])
+                {
+                    this->server.sendMsg(this->getFd(), ":IRC 001 " + this->getNick() + " :Welcome to the IRC Network, " + this->getNick() +  "[!" + this->getUser() + "@" + this->getHost() + "]" +"\r\n");
+                    this->isRegistered = true;
+                    return (1);
+                } 
+            }
+            else {
+                this->server.sendMsg(this->getFd(), ":IRC 434 " + (this->getNick().empty() ? "*" : this->getNick()) + " :Pass or Nick is not set\r\n");
+                return 0;
+            }
         }
     }
     else {
