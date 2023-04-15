@@ -194,6 +194,8 @@ void Server::receive_message(std::vector<pollfd>::iterator i, Client *client, in
         {
             close(i->fd);
             clients.erase(i->fd);
+            this->poll_vec.erase(i);
+            // clearEpoll(client->getFd());
             delete client;
             std::cout << "client went away!!" << std::endl;
             return ;
@@ -257,7 +259,6 @@ void Server::client_not_connected(Client *client)
    std::string command;
    size_t pos = 0;
    size_t end = 0;
-   int error = 0;
 
    std::vector<std::string> command_split;
    std::string key;
@@ -304,16 +305,21 @@ void Server::client_not_connected(Client *client)
 
         this->_command_splited = command_split;
         if (_isNotChannelCmd(command_split)) {
-            client->setCommand(command_split);
-            if (!client->execute())
-            {
-                error = 1; 
-            }
+        client->setCommand(command_split);
+        if (!client->execute())
+        {
+            std::cout << "Client execute" << std::endl;
+            command_split.clear();
+            this->client->buff_client.clear();
+            message_split.clear();
+            break;
+        }
         }
         command_split.clear();
         this->client->buff_client.clear();
         ++k; 
    }
+   std::cout << "out" << std::endl;
    return; 
 }
 
@@ -381,6 +387,7 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                {
                 
                     client_fd = accept(this->fd, (struct sockaddr*)&addr_client,&len);
+                    fcntl(client_fd, F_SETFL, O_NONBLOCK);
                     if (client_fd < 0)
                         throw std::runtime_error("Problem in accept client: ");
                     client_poll.fd = client_fd;
@@ -406,12 +413,10 @@ Server::Server(int port, std::string password): password(password), port(port) ,
                 receive_message(i + poll_vec.begin(), clients[current.fd], len);
                 if (this->clients.find(current.fd) != this->clients.end())
                 {
-                    std::cout << clients.size() << std::endl;
                     size_t pos = this->client->buff_client.find("\n");
                     if ( pos != std::string::npos) {
                         this->client->buff_client =  this->client->buff_client.substr(pos + 1,  this->client->buff_client.size());
                     }
-                    std::cout << "end" << std::endl;
                 }
             }
         }
@@ -442,9 +447,8 @@ bool Server::findNick(std::string &nick)
 {
     if(clients.size() == 0)
         return false;
-    for (std::map<int, Client*>::const_iterator it = this->clients.cbegin(); it != this->clients.cend(); ++it)
+    for (std::map<int, Client*>::iterator it = this->clients.begin(); it != this->clients.end(); ++it)
     {
-        std::cout << it->second->getNick() << std::endl;
         if (it->second->getNick() == nick)
             return true;
     }
@@ -557,11 +561,10 @@ void Server::_wallopsCmd(Client *client)
     }
     if(client->commande_splited.size() < 2)
     {
-        std::string errorMessage = ":" + client->getHost() + "  412  " + (client->getNick().empty() ? "*" : client->getNick()) + " " + ":No text to send\r\n";
+        std::string errorMessage = ":" + client->get_nick_adresse(NULL) + "  412  " + (client->getNick().empty() ? "*" : client->getNick()) + " " + ":No text to send\r\n";
         sendMsg(client->getFd(), errorMessage);
         return;
     }
-    std::cout << message << std::endl;
     for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
     {
         if (it->second->get_isoperator() == false)
@@ -603,7 +606,7 @@ void Server::find_channel_and_sendmsg1(Client *client, std::string &target, std:
 
     if (!tmp && error)
     {
-        sendMsg(client->getFd(), ":" + client->getHost()+ " 403 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + target + " :No such channel\r\n");
+        sendMsg(client->getFd(), ":" + client->get_nick_adresse(NULL)+ " 403 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + target + " :No such channel\r\n");
         return ;
     }
     else if (!tmp && !error)
@@ -611,7 +614,7 @@ void Server::find_channel_and_sendmsg1(Client *client, std::string &target, std:
     else
     {
         std::set<Client*> clients = tmp->getClients(); 
-        tmp->sendToOthers(":" + client->getHost() + " " + flag_com + " " + tmp->getChannelName() + " :" + message + "\r\n", client->getFd());
+        tmp->sendToOthers(":" + client->get_nick_adresse(NULL) + " " + flag_com + " " + tmp->getChannelName() + " :" + message + "\r\n", client->getFd());
     }
     return ;
 }
@@ -633,7 +636,10 @@ void Server::find_client_and_sendmsg1(Client *client, std::string &target, std::
     else if (!tmp)
     {
         if (error == 1)
-            sendMsg(client->getFd(), ":" + client->getHost()+ " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel\r\n");
+        {
+            sendMsg(client->getFd(), ":" + client->get_nick_adresse(NULL) + " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel\r\n");
+            return ;
+        }
         else
             return ;
     }
@@ -907,6 +913,7 @@ void Server::_quitCmd(Client *client)
     }
     sendMsg(client->getFd(), "ERROR : Closing Link 0.0.0.5\r\n");
     clients.erase(client->getFd());
+    clearEpoll(client->getFd());
     delete client;
     std::cout << "client went away!!" << std::endl;
 }
@@ -939,4 +946,16 @@ void Server::_freeAll()
         delete (*iter).second;
     for (size_t i = 0; i < _channels.size(); i++)
         delete _channels[i];
+}
+
+void Server::clearEpoll(int fd)
+{
+    for (std::vector<pollfd>::iterator iter = poll_vec.begin(); iter != poll_vec.end(); iter++)
+    {
+        if ((*iter).fd ==  fd)
+        {
+            poll_vec.erase(iter);
+            break ;
+        }
+    }
 }

@@ -126,6 +126,7 @@ class Server
        void find_client_and_sendmsg1(Client *client, std::string &target, std::string &message, bool error);
        void find_channel_and_sendmsg1(Client *client, std::string &target, std::string &message, bool error);
        std::string get_message(Client *client);
+       void clearEpoll(int fd);
 };
 
 

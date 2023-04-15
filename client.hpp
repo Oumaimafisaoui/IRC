@@ -21,6 +21,9 @@ class Client
     private:
         std::string buff_client;
         int client_fd;
+        int error_pss;
+        int error_usr;
+        int error_nck;
         std::string nickName;
         std::string userName;
         std::string hostName;
