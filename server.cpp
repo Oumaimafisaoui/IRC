@@ -716,7 +716,6 @@ void Server::_joinCmd(Client *client)
         passwords = this->joinCmdParser(client->commande_splited[2]);
     passwords.resize(channels.size(), "");
     size = channels.size();
-    std::cout << "size " << size << std::endl;
     for (int i = 0; i < size; i++)
     {
         if (channels[i][0] == '#' || channels[i][0] == '&')
@@ -729,6 +728,9 @@ void Server::_joinCmd(Client *client)
             }
             else
                 channel->addMember(client, passwords[i]);
+        }
+        else {
+            sendMsg(client->getFd(), ":IRC 403 " + client->getNick() + " " + channels[i] + " :No such channel\r\n");
         }
     }
 }
@@ -766,6 +768,8 @@ void Server::_modeCmd(Client *client)
         channel->setModes(mode, client, client->commande_splited[3]);
     else if (mode == "-k")
         channel->setModes(mode, client, "");
+    else if (mode == "+sn")
+        return; 
     else 
         sendMsg(client->getFd(), ":IRC 472 " + client->getNick() + " " + mode.substr(1, 2) + " :is unknown mode char to me\r\n");
 }
@@ -849,7 +853,14 @@ void Server::_partCmd(Client *client)
         if (!channel)
             sendMsg(client->getFd(), ":IRC 403 " + client->getNick() + " " + channels[i] + " :No such channel\r\n");
         else
+        {
             channel->removeMember(client, raison);
+            if (channel->getClients().size() == 0)
+            {
+                std::vector<Channel *>::iterator iterc = std::find(_channels.begin(), _channels.end(), channel);
+                _channels.erase(iterc);
+            }
+        }
     }
 }
 

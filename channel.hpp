@@ -21,6 +21,7 @@ class Channel {
         std::string _password;
         Client *_owner;
         std::string _topic;
+        std::string _topic_set_time;
     public:
         Channel(std::string name, Client *_client);
         std::string getChannelName();

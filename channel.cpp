@@ -1,6 +1,8 @@
 #include "channel.hpp"
 #include "client.hpp"
 #include <string>
+#include <sys/_types/_size_t.h>
+#include <sstream>
 
 Channel::Channel(std::string name, Client *_client)
 {
@@ -12,6 +14,7 @@ Channel::Channel(std::string name, Client *_client)
     this->_inviteMode = false;
     this->_topicMode = false;
     this->_topic = "";
+    this->_topic_set_time = "";
     sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " " + "JOIN" + " :" + _name);
     sendToOne(_client->getFd(), ":IRC 353 " + _client->getNick() + " = " + _name + " :" + "@" + _client->getNick());
     sendToOne(_client->getFd(), ":IRC 366 " + _client->getNick() + " " + _name + " :End of /NAMES list.");
@@ -54,14 +57,15 @@ void Channel::addMember(Client *_client, std::string password)
                 std::cout << names << std::endl;
             }
             else {
-                names = (*iterator)->getNick();
+                names += (*iterator)->getNick();
             }
             if (*iterator != *_clientList.rbegin())
             {
                 names += " ";
             }
         }
-        sendToOne(_client->getFd(), ":IRC 353 " + _client->getNick() + " = " + _name + " :" + names);
+        std::cout << names << std::endl;
+        sendToOne( _client->getFd(), ":IRC 353 " + _client->getNick() + " = " + _name + " :" + names);
         sendToOne(_client->getFd(), ":IRC 366 " + _client->getNick() + " " + _name + " :End of /NAMES list.");
         if (_topic != "")
             sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " TOPIC" + " :" + _topic);
@@ -172,6 +176,10 @@ void Channel::setModes(std::string _mode, Client *_client, std::string arg)
 
 void Channel::setTopic(std::string newTopic, Client *_client, int n)
 {
+    time_t now = time(0);
+    std::ostringstream oss;
+    oss << now;
+
     if (!isMember(_client))
     {
         sendToOne(_client->getFd(), ":IRC 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
@@ -187,11 +195,15 @@ void Channel::setTopic(std::string newTopic, Client *_client, int n)
         if (_topic == "")
             sendToOne(_client->getFd(), ":IRC 331 " + _client->getNick() + " " + _name +  " :No topic is set.");
         else
+        {
             sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " " + "TOPIC "  + _name + " " + _topic);
+            sendToOne(_client->getFd(), ":IRC 333 " + _client->getNick() + " " + _name + " " +  _client->get_nick_adresse(NULL) +  " " + _topic_set_time);
+        }
     }
     else
     {
         _topic = newTopic;
+        _topic_set_time = oss.str();
         sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "TOPIC "  + _name + " " + _topic);
     }
 }
