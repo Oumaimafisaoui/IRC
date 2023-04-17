@@ -610,7 +610,7 @@ void Server::find_channel_and_sendmsg1(Client *client, std::string &target, std:
 
     if (!tmp && error)
     {
-        sendMsg(client->getFd(), ":" + client->get_nick_adresse(NULL)+ " 403 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + target + " :No such channel\r\n");
+        sendMsg(client->getFd(), ":" + client->get_nick_adresse(NULL) + " 403 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + target + " :No such channel\r\n");
         return ;
     }
     else if (!tmp && !error)
@@ -687,12 +687,12 @@ void Server::_privMsgCmd(Client *client, bool error)
 
     if (client->commande_splited.size() < 2)
     {
-        sendMsg(client->getFd(), ":" + client->getHost()+ " 411 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No recipient given " + flag_com + " " + "\r\n");
+        sendMsg(client->getFd(), ":" + client->get_nick_adresse(NULL) + " 411 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No recipient given " + flag_com + " " + "\r\n");
         return;
     }
     else if (client->commande_splited.size() == 2)
     {
-        sendMsg(client->getFd(), ":" + client->getHost()+ " 412 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No text to send " + flag_com + " " + "\r\n");
+        sendMsg(client->getFd(), ":" + client->get_nick_adresse(NULL) + " 412 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No text to send " + flag_com + " " + "\r\n");
         return;
     }
     std::string message = get_message(client);
