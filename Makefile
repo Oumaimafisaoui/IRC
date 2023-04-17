@@ -4,13 +4,13 @@ XFLAGS = -Wall -Wextra -Werror -std=c++98
 
 SRC = server.cpp main.cpp client.cpp channel.cpp
 OBJ = ${SRC:.cpp=.o}
-NAME = ./localhostserv
+NAME = ./ircserv
 LIB  = server.hpp client.hpp channel.hpp
 
 all : ${NAME}
 
 ${NAME} : ${OBJ} ${LIB}
-		${CC} ${XFLAGS} -lcurl ${OBJ} -o ${NAME}
+		${CC} ${XFLAGS} ${OBJ} -o ${NAME}
 
 %.o : %.cpp
 	${CC} ${XFLAGS} -c $< -o $@

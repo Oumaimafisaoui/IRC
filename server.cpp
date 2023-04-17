@@ -822,7 +822,6 @@ void Server::_partCmd(Client *client)
 
 void Server::_kickCmd(Client *client)
 {
-    std::cout << "hhjj----" << std::endl;
     std::string comment = "";
     size_t size = client->commande_splited.size();
     if (size < 3 || client->commande_splited[2] == ":")
@@ -892,7 +891,7 @@ void Server::_quitCmd(Client *client)
             _channels[i]->sendToMembers(":" + client->get_nick_adresse() + " QUIT " + ":Quit: " + arg);
         }
     }
-    sendMsg(client->getFd(), "ERROR : Closing Link 0.0.0.5\r\n");
+    sendMsg(client->getFd(), "ERROR : Closing Link \r\n");
     clients.erase(client->getFd());
     clearEpoll(client->getFd());
     delete client;
