@@ -851,10 +851,7 @@ void Server::_kickCmd(Client *client)
             channel->kickClient(client, users[i], comment);
         }
         else
-        {
-            sendMsg(client->getFd(), ":localhost 401 " + client->getNick() + " " + users[i] + " :No such n---ick/channel\r\n");
-            std::cout  << users[i] << "Users" << std::endl;
-        }
+            sendMsg(client->getFd(), ":localhost 401 " + client->getNick() + " " + users[i] + " :No such nick/channel\r\n");
     }
 }
 
