@@ -122,6 +122,8 @@ bool Client::checkIsRegister() {
     return isRegistered;
 }
 
+
+
 int Client::nickCmd()
 {
     if(error_pss == 0)
