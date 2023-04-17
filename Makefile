@@ -4,7 +4,7 @@ XFLAGS = -Wall -Wextra -Werror -std=c++98
 
 SRC = server.cpp main.cpp client.cpp channel.cpp
 OBJ = ${SRC:.cpp=.o}
-NAME = ./ircserv
+NAME = ./localhostserv
 LIB  = server.hpp client.hpp channel.hpp
 
 all : ${NAME}

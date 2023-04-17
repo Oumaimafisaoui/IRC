@@ -88,7 +88,6 @@ class Server
         void client_connected(Client *client);
         void sendMsg(int fd, std::string msg);
         bool findNick(std::string &nick);
-        void printAllClients();
         Channel *_findChannel(std::string name);
         Client *findClientByNick(std::string name);
         std::vector<std::string> joinCmdParser(std::string params);

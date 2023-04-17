@@ -15,9 +15,9 @@ Channel::Channel(std::string name, Client *_client)
     this->_topicMode = false;
     this->_topic = "";
     this->_topic_set_time = "";
-    sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " " + "JOIN" + " :" + _name);
-    sendToOne(_client->getFd(), ":IRC 353 " + _client->getNick() + " = " + _name + " :" + "@" + _client->getNick());
-    sendToOne(_client->getFd(), ":IRC 366 " + _client->getNick() + " " + _name + " :End of /NAMES list.");
+    sendToOne(_client->getFd(), ":" + _client->get_nick_adresse() + " " + "JOIN" + " :" + _name);
+    sendToOne(_client->getFd(), ":localhost 353 " + _client->getNick() + " = " + _name + " :" + "@" + _client->getNick());
+    sendToOne(_client->getFd(), ":localhost 366 " + _client->getNick() + " " + _name + " :End of /NAMES list.");
 }
 
 std::string Channel::getChannelName()
@@ -36,25 +36,24 @@ void Channel::addMember(Client *_client, std::string password)
     {
         if (invitedLists.find(_client->getNick()) == invitedLists.end())
         {
-            sendToOne(_client->getFd(), ":IRC 473 " + _client->getNick() + " " + _name +  " :" + "Cannot join channel (+i)" );
+            sendToOne(_client->getFd(), ":localhost 473 " + _client->getNick() + " " + _name +  " :" + "Cannot join channel (+i)" );
             return ;
         }
     }
     if (password != this->_password && this->_password != "")
-        sendToOne(_client->getFd(), ":IRC 475 " +_client->getNick() + " " + _name +  " :" + "Cannot join channel (+k)" );
+        sendToOne(_client->getFd(), ":localhost 475 " +_client->getNick() + " " + _name +  " :" + "Cannot join channel (+k)" );
     else if (isMember(_client))
-        sendToOne(_client->getFd(), ":IRC 443" +_client->getNick() + " " + _name +  " :" + "You've already joined this channel");
+        sendToOne(_client->getFd(), ":localhost 443" +_client->getNick() + " " + _name +  " :" + "You've already joined this channel");
     else
     {
         _clientList.insert(_client);
-        sendToMembers(":" + _client->get_nick_adresse(NULL) + " JOIN" + " :" + _name);
+        sendToMembers(":" + _client->get_nick_adresse() + " JOIN" + " :" + _name);
         std::string names = "";
         for (std::set<Client *>::iterator iterator = _clientList.begin(); iterator != _clientList.end(); iterator++)
         {
             if (isOperator_wm(*iterator))
             {
                 names += "@" + (*iterator)->getNick();
-                std::cout << names << std::endl;
             }
             else {
                 names += (*iterator)->getNick();
@@ -64,11 +63,10 @@ void Channel::addMember(Client *_client, std::string password)
                 names += " ";
             }
         }
-        std::cout << names << std::endl;
-        sendToOne( _client->getFd(), ":IRC 353 " + _client->getNick() + " = " + _name + " :" + names);
-        sendToOne(_client->getFd(), ":IRC 366 " + _client->getNick() + " " + _name + " :End of /NAMES list.");
+        sendToOne( _client->getFd(), ":localhost 353 " + _client->getNick() + " = " + _name + " :" + names);
+        sendToOne(_client->getFd(), ":localhost 366 " + _client->getNick() + " " + _name + " :End of /NAMES list.");
         if (_topic != "")
-            sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " TOPIC" + " :" + _topic);
+            sendToOne(_client->getFd(), ":" + _client->get_nick_adresse() + " TOPIC" + " :" + _topic);
     }
 }
 
@@ -111,7 +109,7 @@ bool Channel::isOperator(Client *_client)
 {
     if (this->_operators.find(_client->getNick()) == this->_operators.end())
     {
-        sendToOne(_client->getFd(),":IRC 475 " +_client->getNick() + " " + _name +  " :" +  " :You're not channel operator" );
+        sendToOne(_client->getFd(),":localhost 475 " +_client->getNick() + " " + _name +  " :" +  " :You're not channel operator" );
         return false;
     }
     return true;
@@ -123,52 +121,52 @@ void Channel::setModes(std::string _mode, Client *_client, std::string arg)
     {
         if (_mode == "+t")
         {
-            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " +t");
+            sendToMembers(":" + _client->get_nick_adresse() + " " + "MODE " + _name + " +t");
             this->_topicMode = true;
         }
         else if (_mode == "+i")
         {
-            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " +i");
+            sendToMembers(":" + _client->get_nick_adresse() + " " + "MODE " + _name + " +i");
             this->_inviteMode = true;
         }
         else if (_mode == "-t")
         {
-            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " -t");
+            sendToMembers(":" + _client->get_nick_adresse() + " " + "MODE " + _name + " -t");
             this->_topicMode = false;
         }
         else if (_mode == "-i")
         {
-            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " -i");
+            sendToMembers(":" + _client->get_nick_adresse() + " " + "MODE " + _name + " -i");
             this->_inviteMode = false;
         }
         else if (_mode == "+o")
         {
             if (!getMemberByNick(arg))
-                sendToOne(_client->getFd(),  ":IRC 441 " + _client->getNick() + " " + _name +  " :" + "They aren't on that channel" );
+                sendToOne(_client->getFd(),  ":localhost 441 " + _client->getNick() + " " + _name +  " :" + "They aren't on that channel" );
             else
             {
-                sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " +o " + arg);
+                sendToMembers(":" + _client->get_nick_adresse() + " " + "MODE " + _name + " +o " + arg);
                 _operators.insert(arg);
             }
         }
         else if (_mode == "-o")
         {
             if (!getMemberByNick(arg))
-                sendToOne(_client->getFd(),  ":IRC 441 " + _client->getNick() + " " + _name +  " :" + "They aren't on that channel" );
+                sendToOne(_client->getFd(),  ":localhost 441 " + _client->getNick() + " " + _name +  " :" + "They aren't on that channel" );
             else
             {
-                sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " -o " + arg);
+                sendToMembers(":" + _client->get_nick_adresse() + " " + "MODE " + _name + " -o " + arg);
                 _operators.erase(arg);
             }
         }
         else if (_mode == "+k")
         {
-            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " +k " + arg);
+            sendToMembers(":" + _client->get_nick_adresse() + " " + "MODE " + _name + " +k " + arg);
             this->_password = arg;
         }
         else if (_mode == "-k")
         {
-            sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "MODE " + _name + " -k " + arg);
+            sendToMembers(":" + _client->get_nick_adresse() + " " + "MODE " + _name + " -k " + arg);
             this->_password = "";
         }
     }
@@ -182,7 +180,7 @@ void Channel::setTopic(std::string newTopic, Client *_client, int n)
 
     if (!isMember(_client))
     {
-        sendToOne(_client->getFd(), ":IRC 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
+        sendToOne(_client->getFd(), ":localhost 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
         return ;
     }
     if (_topicMode)
@@ -193,18 +191,18 @@ void Channel::setTopic(std::string newTopic, Client *_client, int n)
     if (n)
     {
         if (_topic == "")
-            sendToOne(_client->getFd(), ":IRC 331 " + _client->getNick() + " " + _name +  " :No topic is set.");
+            sendToOne(_client->getFd(), ":localhost 331 " + _client->getNick() + " " + _name +  " :No topic is set.");
         else
         {
-            sendToOne(_client->getFd(), ":" + _client->get_nick_adresse(NULL) + " " + "TOPIC "  + _name + " " + _topic);
-            sendToOne(_client->getFd(), ":IRC 333 " + _client->getNick() + " " + _name + " " +  _client->get_nick_adresse(NULL) +  " " + _topic_set_time);
+            sendToOne(_client->getFd(), ":" + _client->get_nick_adresse() + " " + "TOPIC "  + _name + " " + _topic);
+            sendToOne(_client->getFd(), ":localhost 333 " + _client->getNick() + " " + _name + " " +  _client->get_nick_adresse() +  " " + _topic_set_time);
         }
     }
     else
     {
         _topic = newTopic;
         _topic_set_time = oss.str();
-        sendToMembers(":" + _client->get_nick_adresse(NULL) + " " + "TOPIC "  + _name + " " + _topic);
+        sendToMembers(":" + _client->get_nick_adresse() + " " + "TOPIC "  + _name + " " + _topic);
     }
 }
 
@@ -212,21 +210,20 @@ void Channel::addInvited(std::string nick, Client *_client, Client *invited)
 {
     if (!isMember(_client))
     {
-        sendToOne(_client->getFd(), ":IRC 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
+        sendToOne(_client->getFd(), ":localhost 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
         return ;
     }
     if (!this->isOperator(_client))
         return ;
     if (getMemberByNick(nick))
     {
-        sendToOne(_client->getFd(), ":IRC 443 " + _client->getNick() +  " " + nick + " " + _name +  " :is already on channel\n" );
+        sendToOne(_client->getFd(), ":localhost 443 " + _client->getNick() +  " " + nick + " " + _name +  " :is already on channel\n" );
         return ;
     }
     invitedLists.insert(nick);
-    sendToOne(_client->getFd(), ":IRC 341 " + _client->getNick() + " " + nick + " " + _name);
-    sendToOne(_client->getFd(), "invited " + nick + " into channel " + _name);
-    sendToOne(invited->getFd(), ":" + _client->get_nick_adresse(NULL) + " INVITE " + nick + " :" + _name);
-    std::cout << "Channel name " << _name << std::endl; 
+    sendToOne(_client->getFd(), ":localhost 341 " + _client->getNick() + " " + nick + " " + _name);
+    sendToOne(_client->getFd(), ":localhost NOTICE @" + _name + " :" + _client->getNick() + " invited " + nick + " into channel " +  _name);
+    sendToOne(invited->getFd(), ":" + _client->get_nick_adresse() + " INVITE " + nick + " :" + _name);
 }
 
 void Channel::removeMember(Client *_client, std::string raison)
@@ -234,10 +231,10 @@ void Channel::removeMember(Client *_client, std::string raison)
     (void)raison;
     if (!isMember(_client))
     {
-       sendToOne(_client->getFd(), ":IRC 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
+       sendToOne(_client->getFd(), ":localhost 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
         return ;
     }
-    sendToMembers(":" + _client->get_nick_adresse(NULL) + " PART " + _name + " " + raison);
+    sendToMembers(":" + _client->get_nick_adresse() + " PART " + _name + " " + raison);
     clearMember(_client);
     if (this->_operators.size() == 0)
     {
@@ -253,7 +250,7 @@ void Channel::kickClient(Client *_client, std::string nick, std::string comment)
 {
     if (!isMember(_client))
     {
-        sendToOne(_client->getFd(), ":IRC 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
+        sendToOne(_client->getFd(), ":localhost 442 " + _client->getNick() + " " + _name +  " :You're not on that channel");
         return ;
     }
     if (!isOperator(_client))
@@ -261,12 +258,12 @@ void Channel::kickClient(Client *_client, std::string nick, std::string comment)
     Client *user = getMemberByNick(nick);
     if (!user)
     {
-        sendToOne(_client->getFd(), ":IRC 401 " + _client->getNick() +  " " + nick + " :No such nick/channel\r\n");
+        sendToOne(_client->getFd(), ":localhost 401 " + _client->getNick() +  " " + nick + " :He is not in this channe\r\n");
         return ;
     }
     if (comment == "")
         comment = "The raison has not mentioned";
-    sendToMembers(":" + _client->get_nick_adresse(NULL) + " KICK " + _name  + " " + nick + " " + comment);
+    sendToMembers(":" + _client->get_nick_adresse() + " KICK " + _name  + " " + nick + " " + comment);
     clearMember(user);
 }
 
@@ -306,7 +303,6 @@ void Channel::sendToOthers(std::string message, int fd)
         {
             if (send((*iterator)->getFd(), message.c_str(), message.length(), 0) == -1)
                 perror ("send");
-            std::cout << " first :" << fd << " second " << (*iterator)->getFd() << std::endl;
         }
     }
 }

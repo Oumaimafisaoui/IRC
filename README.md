@@ -1,1 +1,1 @@
-# IRC 42
+# localhost 42
