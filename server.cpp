@@ -544,7 +544,7 @@ void Server::_execute_commands(Client *client)
     else if(client->commande_splited[0] == "PONG" || client->commande_splited[0] == "PING")
         return ;
     else
-        sendMsg(client->getFd(), ":IRC 421 " + client->getNick() + " " + client->commande_splited[0]  + " :Unknown command\r\n");
+        sendMsg(client->getFd(), ":" + client->get_nick_adresse(client) + ":IRC 421 " + client->getNick() + " " + client->commande_splited[0]  + " :Unknown command\r\n");
 }
 
 
