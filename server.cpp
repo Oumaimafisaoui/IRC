@@ -598,7 +598,7 @@ void Server::find_client_and_sendmsg1(Client *client, std::string &target, std::
     {
         if (error == 1)
         {
-            sendMsg(client->getFd(), ":" + client->get_nick_adresse() + " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + " :No such nick/Channel\r\n");
+            sendMsg(client->getFd(), ":" + client->get_nick_adresse() + " 401 " + (client->getNick().empty() ? "*" : client->getNick()) + " " + target + " " + ":No such nick/Channel\r\n");
             return ;
         }
         else

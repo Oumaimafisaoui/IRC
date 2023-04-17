@@ -33,6 +33,7 @@
 #define MAX 200
 
 class Client;
+
 class Server
 {
     public:
