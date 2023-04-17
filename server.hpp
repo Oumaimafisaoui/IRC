@@ -22,8 +22,7 @@
 #include "client.hpp"
 #include <numeric>
 #include "channel.hpp"
-// #include <sys/un.h>
-// #include <curl/curl.h>
+
 
 
 # define FAMILY AF_INET
