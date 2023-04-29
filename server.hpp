@@ -4,6 +4,8 @@
 #include <netinet/in.h>
 #include <utility>
 #include <string>
+#include <fstream>
+#include <sstream>
 #include <sys/socket.h>
 #include <sys/socket.h>
 #include <sys/un.h> 
@@ -21,6 +23,8 @@
 #include <numeric>
 #include "channel.hpp"
 
+
+
 # define FAMILY AF_INET
 # define TYPE SOCK_STREAM
 # define   ADDR INADDR_ANY
@@ -29,6 +33,7 @@
 #define MAX 200
 
 class Client;
+
 class Server
 {
     public:
@@ -83,13 +88,14 @@ class Server
         void client_connected(Client *client);
         void sendMsg(int fd, std::string msg);
         bool findNick(std::string &nick);
-        void printAllClients();
         Channel *_findChannel(std::string name);
         Client *findClientByNick(std::string name);
         std::vector<std::string> joinCmdParser(std::string params);
         std::map<int, Client> getClients();
+        std::vector<std::string> ft_parser(std::vector<std::string>);
     private:
        int fd;
+       bool is_active;
         std::string password;
         int port;
        std::vector<pollfd> poll_vec;
@@ -104,7 +110,22 @@ class Server
        void _execute_commands(Client *clien);
        void _joinCmd(Client *client);
        void _modeCmd(Client *client);
-       void _privMsgCmd(Client *client);
+       void _privMsgCmd(Client *client, bool error);
+       void _topicCmd(Client *client);
+       void _inviteCmd(Client *client);
+       void _botCmd(Client *client);     
+        void _botQuote(Client *client);
+       void _partCmd(Client *client);
+       void _kickCmd(Client *client);
+       void _quitCmd(Client *client);
+       void _wallopsCmd(Client *client);
+       void _freeAll();
+       void _operCmd(Client *client);
+        void sendmessage(std::string &message, Client* client, bool error);
+       void find_client_and_sendmsg1(Client *client, std::string &target, std::string &message, bool error);
+       void find_channel_and_sendmsg1(Client *client, std::string &target, std::string &message, bool error);
+       std::string get_message(Client *client);
+       void clearEpoll(int fd);
 };
 
 

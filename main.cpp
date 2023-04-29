@@ -21,14 +21,11 @@ int main(int argc, char **argv)
     }
     port_num = strtol(argv[1], &end, 10);
     password = argv[2];
-    if (is_valid(port_num, argv[2], end))
-    {
-        try
-        {
+    if (is_valid(port_num, argv[2], end)) {
+        try {
             Server serv = Server(port_num, password);
         }
-        catch(const std::exception& e)
-        {
+        catch(const std::exception& e) {
             std::cout << e.what() << '\n';
         }
     }

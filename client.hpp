@@ -21,6 +21,9 @@ class Client
     private:
         std::string buff_client;
         int client_fd;
+        int error_pss;
+        int error_usr;
+        int error_nck;
         std::string nickName;
         std::string userName;
         std::string hostName;
@@ -29,6 +32,7 @@ class Client
         bool        nick_is_set;
         bool        auth[3];
         friend class Server;
+        bool is_operator;
         Server &server;
     public:
         std::vector<std::string> commande_splited;
@@ -37,6 +41,8 @@ class Client
         std::string getNick() const;
         std::string getUser() const;
         std::string getHost() const;
+        bool get_isoperator() const;
+        void setOperatorStatus(bool oper);
         int getFd() const;
         bool checkIsRegister();
         void setFd(int fd);
@@ -44,10 +50,11 @@ class Client
         void setNick(std::string nick);
         void setHost(std::string host);
         void setUser(std::string user);
-        void execute();
-        void passCmd();
-        void userCmd();
-        void nickCmd();
+        int execute();
+        int passCmd();
+        int userCmd();
+        int nickCmd();
+        std::string get_nick_adresse();
 }; 
 
 #endif
